@@ -35,7 +35,7 @@ const AddProduct = () => {
         }
       );
 
-      navigate("/"); // Redirect setelah berhasil
+      navigate("/products"); // Redirect setelah berhasil
     } catch (err) {
       if (err.response?.status === 401) {
         localStorage.removeItem("token");

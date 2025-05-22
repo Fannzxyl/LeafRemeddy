@@ -4,11 +4,14 @@ import axios from "axios";
 import useSWR, { useSWRConfig } from "swr";
 import DashboardLayout from "../layouts/DashboardLayout";
 
+// Gunakan variabel lingkungan agar mudah pindah ke production nanti
+const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
+
 export default function ProductList() {
   const { mutate } = useSWRConfig();
 
   const fetcher = async () => {
-    const res = await axios.get("/api/products"); // Gunakan prefix /api
+    const res = await axios.get(`${API_BASE}/api/products`);
     return res.data;
   };
 
@@ -33,8 +36,8 @@ export default function ProductList() {
     if (!confirmDelete) return;
 
     try {
-      await axios.delete(`/api/products/${id}`); // Gunakan prefix /api
-      mutate("products"); // refresh list setelah hapus
+      await axios.delete(`${API_BASE}/api/products/${id}`);
+      mutate("products");
     } catch (err) {
       alert("Gagal menghapus produk.");
       console.error(err);
@@ -91,7 +94,7 @@ export default function ProductList() {
                   <td colSpan="4" className="text-center p-4 text-gray-500">
                     Belum ada produk.
                   </td>
-                </tr> 
+                </tr>
               )}
             </tbody>
           </table>

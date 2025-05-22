@@ -1,22 +1,30 @@
 import express from "express";
-import cors from "cors"; // Diperbaiki dari 'core'
+import cors from "cors";
 import dotenv from "dotenv";
-import db from "./db.js"; // Diperbaiki path
+import db from "./db.js";
 
+
+
+// Import semua routes
 import ProductRoute from "./routes/ProductRoute.js";
 import AuthRoute from "./routes/AuthRoute.js";
 import ManagerRoute from "./routes/ManagerRoute.js";
+import TranscationRoute from "./routes/TransactionRoute.js";
+import WarehouseRoute from "./routes/WarehouseRoute.js";
 
+// Load .env config
 dotenv.config();
 
+// Inisialisasi express
 const app = express();
-const PORT = process.env.APP_PORT || 5000; // Diperbaiki dari 'POST'
+const PORT = process.env.APP_PORT || 5000;
 
-// Middleware
-app.use(cors()); // Diperbaiki dari 'cons()'
-app.use(express.json());
+// Middleware global
+app.use(cors()); // Izinkan cross-origin request
+app.use(express.json()); // Parse JSON body
+app.use("/api", WarehouseRoute);
 
-// Koneksi Database
+// Tes koneksi database
 db.connect((err) => {
   if (err) {
     console.error("❌ Gagal koneksi ke database:", err.message);
@@ -25,15 +33,16 @@ db.connect((err) => {
   }
 });
 
-// Routes dengan prefix /api
+// Gunakan semua route dengan prefix /api
 app.use("/api", ProductRoute);
 app.use("/api", AuthRoute);
 app.use("/api", ManagerRoute);
+app.use("/api", TranscationRoute);
 
-// Error handling middleware
+// Middleware penanganan error fallback
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send('Something broke!');
+  res.status(500).send("❌ Terjadi kesalahan di server.");
 });
 
 // Start server

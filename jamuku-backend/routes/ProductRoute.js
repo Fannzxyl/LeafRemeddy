@@ -4,9 +4,8 @@ import {
   getProductById,
   createProduct,
   updateProduct,
-  deleteProduct,
+  deleteProduct
 } from "../controllers/ProductController.js";
-import { verifyToken } from "../middleware/authMiddleware.js";
 import { body } from "express-validator";
 
 const router = express.Router();
@@ -15,10 +14,9 @@ const router = express.Router();
 router.get("/products", getProducts);
 router.get("/products/:id", getProductById);
 
-// Private - butuh token
+// Public - create dan update tetap bisa validasi input
 router.post(
   "/products",
-  verifyToken,
   [
     body("name").notEmpty().withMessage("Nama produk wajib diisi"),
     body("price").isFloat({ min: 0 }).withMessage("Harga tidak valid"),
@@ -26,7 +24,9 @@ router.post(
   createProduct
 );
 
-router.put("/products/:id", verifyToken, updateProduct);
-router.delete("/products/:id", verifyToken, deleteProduct);
+router.put("/products/:id", updateProduct);
+
+// 🔥 Hapus produk tanpa JWT, hanya dengan username & password
+router.delete("/products/:id", deleteProduct);
 
 export default router;

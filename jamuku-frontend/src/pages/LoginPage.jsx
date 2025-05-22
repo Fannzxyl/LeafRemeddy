@@ -9,6 +9,23 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [particlesOptions, setParticlesOptions] = useState({});
 
+  // ✅ Cek jika user sudah login → langsung redirect ke dashboard
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (token) {
+      if (role === "MANAGER") {
+        navigate("/dashboard-manager");
+      } else if (role === "STAZ") {
+        navigate("/dashboard-staz");
+      } else {
+        navigate("/");
+      }
+    }
+  }, [navigate]);
+
+  // Inisialisasi background partikel
   const particlesInit = async (engine) => {
     await loadSlim(engine);
   };
@@ -19,6 +36,7 @@ export default function LoginPage() {
       .then((data) => setParticlesOptions(data));
   }, []);
 
+  // ✅ Login handler
   const handleLogin = async (e) => {
     e.preventDefault();
     const username = e.target.username.value;
