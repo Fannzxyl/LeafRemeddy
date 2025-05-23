@@ -60,13 +60,21 @@ export default function Sidebar() {
             <span>Product List</span>
           </button>
 
-          {/* Lokasi Gudang */}
           <button
             onClick={() => navigate("/gudang")}
             className="flex items-center gap-2 w-full p-2 rounded hover:bg-green-700 cursor-pointer"
           >
             <FaWarehouse />
             <span>Lokasi Gudang</span>
+          </button>
+
+          {/* Tambahan Stok Barang */}
+          <button
+            onClick={() => navigate("/stok-produk")}
+            className="flex items-center gap-2 w-full p-2 rounded hover:bg-green-700 cursor-pointer"
+          >
+            <FaBoxOpen />
+            <span>Stok Barang</span>
           </button>
         </nav>
       </div>

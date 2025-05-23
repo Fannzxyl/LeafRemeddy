@@ -16,7 +16,7 @@ export default function DashboardStaz() {
             Dashboard Staz
           </h2>
           <p className="text-gray-700">
-            Hai Staz! Kamu bisa mengakses dan menambahkan data produk serta menginput transaksi.
+            Hai Staz! Kamu bisa mengakses dan menambahkan data produk serta menginput transaksi ya!!
           </p>
         </div>
       </div>

@@ -23,6 +23,7 @@ import WarehouseLocation from "./components/WarehouseLocation";
 // Fitur tambahan
 import UserList from "./pages/UserList";
 import TransactionList from "./pages/TransactionList";
+import AddTransaction from "./components/AddTransaction"; // ✅ Tambahkan ini
 
 // Proteksi akses
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -110,6 +111,14 @@ function App() {
           element={
             <ProtectedRoute>
               <TransactionList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/add-transaction"
+          element={
+            <ProtectedRoute>
+              <AddTransaction />
             </ProtectedRoute>
           }
         />
