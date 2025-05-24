@@ -4,10 +4,22 @@ import { motion } from "framer-motion";
 import Particles from "react-tsparticles";
 import { loadSlim } from "tsparticles-slim";
 import GlitterEffect from "./GlitterEffect";
+import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [particlesOptions, setParticlesOptions] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    if (token) {
+      if (role === "MANAGER") navigate("/dashboard-manager");
+      else if (role === "STAZ") navigate("/dashboard-staz");
+      else navigate("/");
+    }
+  }, [navigate]);
 
   const particlesInit = async (engine) => {
     await loadSlim(engine);
@@ -41,13 +53,9 @@ export default function LoginPage() {
       localStorage.setItem("username", data.username);
       localStorage.setItem("role", data.role);
 
-      if (data.role === "MANAGER") {
-        navigate("/dashboard-manager");
-      } else if (data.role === "STAZ") {
-        navigate("/dashboard-staz");
-      } else {
-        navigate("/homepage");
-      }
+      if (data.role === "MANAGER") navigate("/dashboard-manager");
+      else if (data.role === "STAZ") navigate("/dashboard-staz");
+      else navigate("/homepage");
     } catch (err) {
       alert("Terjadi kesalahan saat login.");
       console.error(err);
@@ -56,7 +64,6 @@ export default function LoginPage() {
 
   return (
     <div className="relative w-full min-h-screen text-white scroll-smooth">
-      {/* Background dan Partikel */}
       <div
         className="fixed inset-0 bg-cover bg-center -z-10"
         style={{
@@ -72,13 +79,12 @@ export default function LoginPage() {
         className="fixed inset-0 -z-10"
       />
 
-      {/* Header */}
       <div className="absolute top-6 left-6 z-30">
         <motion.span
           className="text-green-400 text-xl font-pixel"
           initial={{ x: -50, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 1, ease: "easeOut" }}
+          transition={{ duration: 1 }}
         >
           Leaf Remedy
         </motion.span>
@@ -86,22 +92,18 @@ export default function LoginPage() {
       <div className="absolute top-6 right-6 z-30">
         <button
           onClick={() => navigate("/signup")}
-          className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded shadow-lg transition-transform transform hover:scale-105"
+          className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded shadow-lg transition-transform hover:scale-105"
         >
           Sign Up
         </button>
       </div>
 
-      {/* Section 1: Login */}
-      <section
-        id="section-login"
-        className="w-full h-screen flex items-center justify-center px-4"
-      >
+      <section className="w-full h-screen flex items-center justify-center px-4">
         <motion.div
           className="relative bg-black/20 rounded-2xl p-8 w-[350px] border border-green-400/30 backdrop-blur-sm z-20"
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          transition={{ duration: 0.8 }}
         >
           <GlitterEffect className="absolute -top-2 -left-2" />
           <GlitterEffect className="absolute -bottom-2 -right-2" />
@@ -112,18 +114,28 @@ export default function LoginPage() {
               <input
                 name="username"
                 type="text"
+                defaultValue={localStorage.getItem("rememberedUsername") || ""}
                 className="w-full px-3 py-2 rounded bg-gray-900/30 focus:outline-none focus:ring-2 focus:ring-green-400"
                 required
               />
             </div>
             <div className="mb-6">
               <label className="block mb-1">Password</label>
-              <input
-                name="password"
-                type="password"
-                className="w-full px-3 py-2 rounded bg-gray-900/30 focus:outline-none focus:ring-2 focus:ring-green-400"
-                required
-              />
+              <div className="relative">
+                <input
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  className="w-full px-3 py-2 rounded bg-gray-900/30 focus:outline-none focus:ring-2 focus:ring-green-400 pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white text-xl"
+                >
+                  {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
+                </button>
+              </div>
             </div>
             <button
               type="submit"
@@ -133,24 +145,6 @@ export default function LoginPage() {
             </button>
           </form>
         </motion.div>
-      </section>
-
-      {/* Section 2: Start the Journey */}
-      <section
-        id="section-journey"
-        className="min-h-screen flex flex-col items-center justify-center text-center px-4"
-      >
-        <h1 className="text-5xl font-bold mb-4">VISITE</h1>
-        <p className="text-lg mb-8 max-w-md">
-          Explore nature and comedy in a whole new way through{" "}
-          <span className="italic">Leaf Comedy</span>'s herbal journeys.
-        </p>
-        <button
-          className="bg-white text-black font-semibold py-2 px-6 rounded-full hover:bg-gray-200 transition"
-          onClick={() => navigate("/homepage")}
-        >
-          Start the Journey
-        </button>
       </section>
     </div>
   );
