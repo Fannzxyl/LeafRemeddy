@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import DashboardLayout from "../layouts/DashboardLayout";
+import axios from "axios";
 
 export default function UserList() {
   const [users, setUsers] = useState([]);
@@ -7,24 +8,38 @@ export default function UserList() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    fetch("/api/users", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setUsers(data);
+    const role = localStorage.getItem("role");
+    const token = localStorage.getItem("token");
+
+    // ❗ Tambahan validasi role di client-side
+    if (role !== "MANAGER") {
+      setMessage("Akses ditolak. Hanya Manager yang dapat melihat daftar pengguna.");
+      setLoading(false);
+      return;
+    }
+
+    const fetchUsers = async () => {
+      try {
+        const res = await axios.get("/api/users", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (Array.isArray(res.data)) {
+          setUsers(res.data);
         } else {
-          setMessage(data?.message || "Data tidak valid");
+          setMessage(res.data?.message || "Data tidak valid");
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error(err);
         setMessage("Terjadi kesalahan saat mengambil data.");
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
   }, []);
 
   return (

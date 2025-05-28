@@ -1,41 +1,58 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+import DashboardLayout from "../layouts/DashboardLayout";
 
-const EditProduct = () => {
-  const [product, setProduct] = useState({
-    name: "",
-    price: "",
-    description: ""
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
+
+export default function EditProduct() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [locations, setLocations] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [formData, setFormData] = useState({
+    namaProduk: "",
+    kategori: "",
+    stok: "",
+    satuan: "",
+    status: "ACTIVE",
+    id_lokasi: ""
+  });
 
   useEffect(() => {
-    const fetchProduct = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/products/${id}`);
-        setProduct({
-          name: response.data.name,
-          price: response.data.price,
-          description: response.data.description || ""
+        // Fetch locations
+        const locationsResponse = await axios.get(`${API_BASE}/api/locations`);
+        setLocations(locationsResponse.data);
+
+        // Fetch product data
+        const productResponse = await axios.get(`${API_BASE}/api/inventory/${id}`);
+        const product = productResponse.data;
+        
+        setFormData({
+          namaProduk: product.namaProduk || "",
+          kategori: product.kategori || "",
+          stok: product.stok?.toString() || "",
+          satuan: product.satuan || "",
+          status: product.status || "ACTIVE",
+          id_lokasi: product.id_lokasi?.toString() || ""
         });
-      } catch (err) {
+      } catch (error) {
+        console.error("Error fetching data:", error);
         setError("Gagal memuat data produk");
-        console.error("Fetch error:", err);
       }
     };
 
-    fetchProduct();
+    fetchData();
   }, [id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setProduct(prev => ({
+    setFormData(prev => ({
       ...prev,
-      [name]: name === 'price' ? Number(value) : value
+      [name]: value
     }));
   };
 
@@ -45,99 +62,188 @@ const EditProduct = () => {
     setError("");
 
     try {
-      const token = localStorage.getItem("token");
-      await axios.put(
-        `http://localhost:5000/api/products/${id}`,
-        product,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
-        }
-      );
-      navigate("/products", { state: { message: "Produk berhasil diperbarui" } });
-    } catch (err) {
-      setError(err.response?.data?.message || "Gagal memperbarui produk");
-      console.error("Update error:", err);
+      if (!formData.namaProduk || !formData.kategori || !formData.stok || !formData.satuan || !formData.id_lokasi) {
+        setError("Semua field wajib diisi!");
+        setLoading(false);
+        return;
+      }
+
+      if (isNaN(formData.stok) || parseInt(formData.stok) < 0) {
+        setError("Stok harus berupa angka positif!");
+        setLoading(false);
+        return;
+      }
+
+      await axios.put(`${API_BASE}/api/inventory/${id}`, {
+        namaProduk: formData.namaProduk,
+        kategori: formData.kategori,
+        stok: parseInt(formData.stok),
+        satuan: formData.satuan,
+        status: formData.status,
+        id_lokasi: parseInt(formData.id_lokasi)
+      });
+
+      alert("Produk berhasil diperbarui!");
+      navigate("/inventory");
+    } catch (error) {
+      console.error("Error updating product:", error);
+      const errorMessage = error.response?.data?.message || "Gagal memperbarui produk";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <h1 className="text-2xl font-bold mb-6">Edit Produk</h1>
-      
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
+    <DashboardLayout>
+      <div className="p-6">
+        <h1 className="text-2xl font-bold text-gray-800 mb-6">Edit Produk</h1>
 
-      <form onSubmit={handleSubmit} className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
-            Nama Produk
-          </label>
-          <input
-            type="text"
-            name="name"
-            value={product.name}
-            onChange={handleChange}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-          />
-        </div>
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
 
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
-            Harga
-          </label>
-          <input
-            type="number"
-            name="price"
-            value={product.price}
-            onChange={handleChange}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            min="0"
-            required
-          />
-        </div>
+        <div className="bg-white shadow rounded-lg p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nama Produk
+              </label>
+              <input
+                type="text"
+                name="namaProduk"
+                value={formData.namaProduk}
+                onChange={handleChange}
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Masukkan nama produk"
+                required
+              />
+            </div>
 
-        <div className="mb-6">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
-            Deskripsi
-          </label>
-          <textarea
-            name="description"
-            value={product.description}
-            onChange={handleChange}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            rows="3"
-          />
-        </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Kategori
+              </label>
+              <select
+                name="kategori"
+                value={formData.kategori}
+                onChange={handleChange}
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                required
+              >
+                <option value="">Pilih Kategori</option>
+                <option value="Herbal">Herbal</option>
+                <option value="Imunitas">Imunitas</option>
+                <option value="Pegal Linu">Pegal Linu</option>
+                <option value="Stamina">Stamina</option>
+                <option value="Detox">Detox</option>
+                <option value="Pencernaan">Pencernaan</option>
+              </select>
+            </div>
 
-        <div className="flex items-center justify-between">
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
-          >
-            {loading ? "Menyimpan..." : "Simpan Perubahan"}
-          </button>
-          
-          <button
-            type="button"
-            onClick={() => navigate("/products")}
-            className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-          >
-            Batal
-          </button>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Stok
+              </label>
+              <input
+                type="number"
+                name="stok"
+                value={formData.stok}
+                onChange={handleChange}
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Masukkan jumlah stok"
+                min="0"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Satuan
+              </label>
+              <select
+                name="satuan"
+                value={formData.satuan}
+                onChange={handleChange}
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                required
+              >
+                <option value="">Pilih Satuan</option>
+                <option value="botol">Botol</option>
+                <option value="box">Box</option>
+                <option value="pcs">Pcs</option>
+                <option value="kg">Kg</option>
+                <option value="gram">Gram</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Status
+              </label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="INACTIVE">INACTIVE</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Lokasi Gudang
+              </label>
+              <select
+                name="id_lokasi"
+                value={formData.id_lokasi}
+                onChange={handleChange}
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                required
+              >
+                <option value="">Pilih Lokasi Gudang</option>
+                {locations.map((location) => (
+                  <option key={location.id} value={location.id}>
+                    {location.nama} - {location.alamat}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {locations.length === 0 && (
+              <div className="text-yellow-600 text-sm">
+                Loading lokasi gudang...
+              </div>
+            )}
+
+            <div className="flex gap-4 pt-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className={`px-6 py-3 rounded-md text-white font-medium ${
+                  loading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"
+                }`}
+              >
+                {loading ? "Menyimpan..." : "Simpan Perubahan"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate("/inventory")}
+                className="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-md font-medium"
+              >
+                Batal
+              </button>
+            </div>
+          </form>
         </div>
-      </form>
-    </div>
+      </div>
+    </DashboardLayout>
   );
-};
-
-export default EditProduct;
+}
