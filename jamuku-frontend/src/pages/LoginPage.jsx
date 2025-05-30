@@ -1,27 +1,32 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import Particles from "react-tsparticles";
 import { loadSlim } from "tsparticles-slim";
 import GlitterEffect from "./GlitterEffect";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
+import axios from "axios";
+
+const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [particlesOptions, setParticlesOptions] = useState({});
   const [showPassword, setShowPassword] = useState(false);
+  const [username, setUsername] = useState(localStorage.getItem("rememberedUsername") || "");
+  const [password, setPassword] = useState("");
+  const [msg, setMsg] = useState("");
+
+  const particlesInit = async (engine) => {
+    await loadSlim(engine);
+  };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
-    if (token) {
-      if (role === "MANAGER") navigate("/dashboard-manager");
-      else if (role === "STAZ") navigate("/dashboard-staz");
-      else navigate("/");
-    }
-  }, [navigate]);
+    fetch("/particles.json")
+      .then((res) => res.json())
+      .then((data) => setParticlesOptions(data));
+  }, []);
 
-  // ✅ Cek jika user sudah login → langsung redirect ke dashboard
   useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -37,46 +42,50 @@ export default function LoginPage() {
     }
   }, [navigate]);
 
-  // Inisialisasi background partikel
-  const particlesInit = async (engine) => {
-    await loadSlim(engine);
-  };
-
-  useEffect(() => {
-    fetch("/particles.json")
-      .then((res) => res.json())
-      .then((data) => setParticlesOptions(data));
-  }, []);
-
-  // ✅ Login handler
   const handleLogin = async (e) => {
     e.preventDefault();
-    const username = e.target.username.value;
-    const password = e.target.password.value;
+    setMsg("");
 
     try {
-      const response = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+      const response = await axios.post(`${API_BASE}/api/login`, {
+        username: username,
+        password: password,
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        alert(data.message || "Login gagal");
-        return;
+      console.log("Response from backend:", response.data); // LOG 1: Lihat respons penuh dari backend
+      console.log("Token received:", response.data.token); // LOG 2: Pastikan token ada di respons
+      console.log("Role received:", response.data.role);   // LOG 3: Pastikan role ada di respons
+
+      localStorage.setItem("token", response.data.token);
+      // PERBAIKI INI: Backend mengembalikan 'userName' (camelCase), bukan 'username' (lowercase)
+      localStorage.setItem("username", response.data.userName); // Ambil 'userName' dari respons backend
+      localStorage.setItem("role", response.data.role);
+
+      // LOG 4: Konfirmasi apa yang baru saja disimpan
+      console.log("Token stored in localStorage:", localStorage.getItem('token'));
+      console.log("Username stored in localStorage:", localStorage.getItem('username'));
+      console.log("Role stored in localStorage:", localStorage.getItem('role'));
+
+
+      setMsg(response.data.message);
+      alert(response.data.message);
+
+      if (response.data.role === "MANAGER") {
+        navigate("/dashboard-manager");
+      } else if (response.data.role === "STAZ") {
+        navigate("/dashboard-staz");
+      } else {
+        navigate("/homepage");
       }
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("username", data.username);
-      localStorage.setItem("role", data.role);
-
-      if (data.role === "MANAGER") navigate("/dashboard-manager");
-      else if (data.role === "STAZ") navigate("/dashboard-staz");
-      else navigate("/homepage");
-    } catch (err) {
-      alert("Terjadi kesalahan saat login.");
-      console.error(err);
+    } catch (error) {
+      if (error.response) {
+        setMsg(error.response.data.message || "Login gagal.");
+        alert(error.response.data.message || "Login gagal.");
+      } else {
+        setMsg("Terjadi kesalahan jaringan atau server.");
+        alert("Terjadi kesalahan jaringan atau server.");
+      }
+      console.error(error);
     }
   };
 
@@ -126,13 +135,19 @@ export default function LoginPage() {
           <GlitterEffect className="absolute -top-2 -left-2" />
           <GlitterEffect className="absolute -bottom-2 -right-2" />
           <h2 className="text-3xl font-bold text-center mb-6">Welcome Back</h2>
+          {msg && (
+            <p className={`text-center mb-4 ${msg.includes("berhasil") ? "text-green-400" : "text-red-400"}`}>
+              {msg}
+            </p>
+          )}
           <form onSubmit={handleLogin}>
             <div className="mb-4">
               <label className="block mb-1">Username</label>
               <input
                 name="username"
                 type="text"
-                defaultValue={localStorage.getItem("rememberedUsername") || ""}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="w-full px-3 py-2 rounded bg-gray-900/30 focus:outline-none focus:ring-2 focus:ring-green-400"
                 required
               />
@@ -143,6 +158,8 @@ export default function LoginPage() {
                 <input
                   name="password"
                   type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-3 py-2 rounded bg-gray-900/30 focus:outline-none focus:ring-2 focus:ring-green-400 pr-10"
                   required
                 />
@@ -162,6 +179,9 @@ export default function LoginPage() {
               Login
             </button>
           </form>
+          <p className="text-center text-sm text-white mt-4">
+            Belum punya akun? <Link to="/signup" className="text-green-400 hover:underline">Daftar di sini</Link>
+          </p>
         </motion.div>
       </section>
     </div>

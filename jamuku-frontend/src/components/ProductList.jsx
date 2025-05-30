@@ -9,20 +9,42 @@ const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
 export default function ProductList() {
   const { mutate } = useSWRConfig();
 
-  const fetcher = async () => {
-    const res = await axios.get(`${API_BASE}/api/inventory`);
+  const fetcher = async (url) => {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      const authError = new Error("Token tidak ditemukan. Silakan login.");
+      authError.status = 403;
+      throw authError;
+    }
+
+    const res = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
     return res.data;
   };
 
-  const { data, error, isLoading } = useSWR("inventory", fetcher);
+  const { data, error, isLoading } = useSWR(`${API_BASE}/api/inventory`, fetcher);
 
-  if (error) return (
-    <DashboardLayout>
-      <div className="p-6 text-red-600">
-        Gagal memuat data produk: {error.message}
-      </div>
-    </DashboardLayout>
-  );
+  if (error) {
+    let errorMessage = "Gagal memuat data produk.";
+    if (error.response?.status === 403 || error.status === 403) {
+      errorMessage = "Akses ditolak. Anda tidak memiliki izin atau sesi Anda telah berakhir. Silakan login kembali.";
+    } else if (error.response?.status === 401 || error.status === 401) {
+      errorMessage = "Sesi Anda telah berakhir. Silakan login kembali.";
+    } else {
+      errorMessage += ` ${error.message}`;
+    }
+    return (
+      <DashboardLayout>
+        <div className="p-6 text-red-600">
+          {errorMessage}
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   if (isLoading || !data) return (
     <DashboardLayout>
@@ -37,8 +59,17 @@ export default function ProductList() {
     if (!confirmDelete) return;
 
     try {
-      await axios.delete(`${API_BASE}/api/inventory/${id}`);
-      mutate("inventory");
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert("Anda tidak memiliki izin untuk menghapus produk. Silakan login.");
+        return;
+      }
+      await axios.delete(`${API_BASE}/api/inventory/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      mutate(`${API_BASE}/api/inventory`); // Mutate dengan kunci SWR yang benar
       alert("Produk berhasil dihapus!");
     } catch (err) {
       alert("Gagal menghapus produk: " + (err.response?.data?.message || err.message));

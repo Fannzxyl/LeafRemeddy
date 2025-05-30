@@ -9,6 +9,7 @@ export default function AddProduct() {
   const navigate = useNavigate();
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole] = useState('');
   const [formData, setFormData] = useState({
     namaProduk: "",
     kategori: "",
@@ -19,55 +20,64 @@ export default function AddProduct() {
   });
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      setUserRole(payload.role);
+    }
+
     const fetchLocations = async () => {
       try {
-        const response = await axios.get(`${API_BASE}/api/locations`);
+        const response = await axios.get(`${API_BASE}/api/locations`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
         setLocations(response.data);
       } catch (error) {
         console.error("Error fetching locations:", error);
         alert("Gagal memuat data lokasi");
       }
     };
-
     fetchLocations();
   }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       if (!formData.namaProduk || !formData.kategori || !formData.stok || !formData.satuan || !formData.id_lokasi) {
         alert("Semua field wajib diisi!");
         setLoading(false);
         return;
       }
-
       if (isNaN(formData.stok) || parseInt(formData.stok) < 0) {
         alert("Stok harus berupa angka positif!");
         setLoading(false);
         return;
       }
 
-      await axios.post(`${API_BASE}/api/inventory`, {
+      const response = await axios.post(`${API_BASE}/api/inventory`, {
         namaProduk: formData.namaProduk,
         kategori: formData.kategori,
         stok: parseInt(formData.stok),
         satuan: formData.satuan,
         status: formData.status,
         id_lokasi: parseInt(formData.id_lokasi)
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
 
-      alert("Produk berhasil ditambahkan!");
-      navigate("/products");
+      if (response.data.type === 'direct') {
+        alert("Produk berhasil ditambahkan!");
+        navigate("/products");
+      } else if (response.data.type === 'approval_needed') {
+        alert("Permintaan penambahan produk telah dikirim untuk approval. Manager akan meninjau permintaan Anda.");
+        navigate("/transactions");
+      }
     } catch (error) {
       console.error("Error adding product:", error);
       const errorMessage = error.response?.data?.message || "Gagal menambahkan produk";
@@ -81,7 +91,11 @@ export default function AddProduct() {
     <DashboardLayout>
       <div className="p-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-6">Tambah Produk</h1>
-
+        {userRole === 'STAZ' && (
+          <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4">
+            <strong>Info:</strong> Sebagai Staff, produk yang Anda tambahkan akan memerlukan persetujuan dari Manager terlebih dahulu.
+          </div>
+        )}
         <div className="bg-white shadow rounded-lg p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -98,7 +112,6 @@ export default function AddProduct() {
                 required
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Kategori
@@ -119,7 +132,6 @@ export default function AddProduct() {
                 <option value="Pencernaan">Pencernaan</option>
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Stok
@@ -135,7 +147,6 @@ export default function AddProduct() {
                 required
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Satuan
@@ -155,22 +166,22 @@ export default function AddProduct() {
                 <option value="gram">Gram</option>
               </select>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Status
-              </label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="ACTIVE">ACTIVE</option>
-                <option value="INACTIVE">INACTIVE</option>
-              </select>
-            </div>
-
+            {userRole === 'MANAGER' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Status
+                </label>
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="INACTIVE">INACTIVE</option>
+                </select>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Lokasi Gudang
@@ -190,26 +201,21 @@ export default function AddProduct() {
                 ))}
               </select>
             </div>
-
             {locations.length === 0 && (
               <div className="text-yellow-600 text-sm">
                 Loading lokasi gudang...
               </div>
             )}
-
             <div className="flex gap-4 pt-4">
               <button
                 type="submit"
                 disabled={loading}
                 className={`px-6 py-3 rounded-md text-white font-medium ${
-                  loading
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-green-600 hover:bg-green-700"
+                  loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
                 }`}
               >
-                {loading ? "Menyimpan..." : "Tambah Produk"}
+                {loading ? "Menyimpan..." : userRole === 'STAZ' ? "Kirim Permintaan" : "Tambah Produk"}
               </button>
-
               <button
                 type="button"
                 onClick={() => navigate("/products")}

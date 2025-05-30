@@ -4,24 +4,29 @@ import {
   getTransactions,
   createTransaction,
   approveTransaction,
-  rejectTransaction, // Tambahan jika ingin reject
+  rejectTransaction,
 } from "../controllers/TransactionController.js";
 
-import { verifyToken } from "../middleware/authMiddleware.js";
-import { authorizeRoles } from "../middleware/roleMiddleware.js";
+// Pastikan ini diimpor dari authMiddleware.js
+// KITA PERLU verifyUser untuk rute GET /transactions (lihat semua transaksi)
+import { verifyToken, verifyUser, verifyManager } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// STAZ & MANAGER: Lihat semua transaksi
-router.get("/transactions", verifyToken, getTransactions);
+// 1. GET /api/transactions - Untuk melihat semua transaksi (oleh STAZ & MANAGER)
+// Menggunakan verifyUser karena ini adalah rute umum untuk semua user yang terverifikasi.
+router.get("/transactions", verifyToken, verifyUser, getTransactions);
 
-// STAZ: Buat transaksi (status awal 'pending')
-router.post("/transactions", verifyToken, authorizeRoles("STAZ"), createTransaction);
+// 2. POST /api/transactions - Untuk membuat transaksi baru (oleh STAZ)
+// Asumsi createTransaction ini untuk STAZ meminta penambahan produk.
+// Jika Anda punya roleMiddleware.js dengan authorizeRoles("STAZ"), gunakan itu.
+// Jika tidak, verifyUser saja cukup jika backend Anda sudah menangani role di dalam controller.
+router.post("/transactions", verifyToken, verifyUser, createTransaction); // Menggunakan verifyUser
 
-// MANAGER: Setujui transaksi
-router.put("/transactions/:id/approve", verifyToken, authorizeRoles("MANAGER"), approveTransaction);
+// 3. PUT /api/transactions/:id/approve - Untuk menyetujui transaksi (oleh MANAGER)
+router.put("/transactions/:id/approve", verifyToken, verifyManager, approveTransaction);
 
-// MANAGER: Tolak transaksi (opsional)
-router.put("/transactions/:id/reject", verifyToken, authorizeRoles("MANAGER"), rejectTransaction);
+// 4. PUT /api/transactions/:id/reject - Untuk menolak transaksi (oleh MANAGER)
+router.put("/transactions/:id/reject", verifyToken, verifyManager, rejectTransaction);
 
 export default router;
