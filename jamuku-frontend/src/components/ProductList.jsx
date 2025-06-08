@@ -92,11 +92,12 @@ export default function ProductList() {
             <thead className="bg-gray-100 text-xs uppercase">
               <tr>
                 <th className="p-3 text-center">No</th>
-                <th className="p-3">Nama Produk</th>
+                <th className="p-3">Nama Produk</th> {/* Header kolom */}
                 <th className="p-3">Kategori</th>
                 <th className="p-3">Stok</th>
                 <th className="p-3">Satuan</th>
                 <th className="p-3">Status</th>
+                <th className="p-3">Lokasi</th> {/* Header lokasi */}
                 <th className="p-3 text-center">Aksi</th>
               </tr>
             </thead>
@@ -105,7 +106,7 @@ export default function ProductList() {
                 data.map((product, index) => (
                   <tr key={product.id} className="border-t hover:bg-gray-50">
                     <td className="p-3 text-center">{index + 1}</td>
-                    <td className="p-3">{product.namaProduk}</td>
+                    <td className="p-3">{product.name}</td> {/* KOREKSI: Gunakan product.name */}
                     <td className="p-3">{product.kategori}</td>
                     <td className="p-3">{product.stok}</td>
                     <td className="p-3">{product.satuan}</td>
@@ -118,6 +119,7 @@ export default function ProductList() {
                         {product.status}
                       </span>
                     </td>
+                    <td className="p-3">{product.lokasi}</td> {/* Kolom lokasi */}
                     <td className="p-3 text-center space-x-2">
                       <Link
                         to={`/edit/${product.id}`}

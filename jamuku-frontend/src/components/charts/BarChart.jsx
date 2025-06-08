@@ -1,4 +1,3 @@
-// src/components/charts/BarChart.jsx
 import React from 'react';
 import {
   Chart as ChartJS,
@@ -21,36 +20,78 @@ ChartJS.register(
 );
 
 const BarChart = ({ data, title }) => {
-  // PERUBAHAN DI SINI: Gunakan item.month_year dan format untuk bulan/tahun
-  const labels = data.map(item => {
-    // Membuat tanggal dari YYYY-MM dengan menambahkan '-01' untuk kompatibilitas yang lebih baik
-    const date = new Date(`${item.month_year}-01`);
-    // Memastikan objek tanggal valid sebelum memformat
-    if (isNaN(date.getTime())) {
-      return item.month_year; // Fallback jika tanggal tidak valid
-    }
-    return date.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
+  // DEBUG: Log data yang diterima
+  console.log('=== BarChart Debug ===');
+  console.log('BarChart received data:', data);
+  console.log('Data type:', typeof data);
+  console.log('Is Array:', Array.isArray(data));
+  
+  const safeData = Array.isArray(data) ? data : [];
+  console.log('BarChart safeData:', safeData);
+  console.log('SafeData length:', safeData.length);
+  
+  // DEBUG: Log setiap item data
+  safeData.forEach((item, index) => {
+    console.log(`--- Item ${index} ---`);
+    console.log('Full item:', item);
+    console.log('Item keys:', Object.keys(item));
+    console.log('Date:', item.date);
+    console.log('Total Masuk:', item['Total Masuk']);
+    console.log('Total Keluar:', item['Total Keluar']);
+    console.log('Total Masuk type:', typeof item['Total Masuk']);
+    console.log('Total Keluar type:', typeof item['Total Keluar']);
   });
+
+  const labels = safeData.map(item => {
+    const date = new Date(item.date);
+    if (isNaN(date.getTime())) {
+      console.log('Invalid date:', item.date);
+      return item.date; // Fallback jika tanggal tidak valid
+    }
+    const formatted = date.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+    console.log(`Date formatted: ${item.date} -> ${formatted}`);
+    return formatted;
+  });
+
+  // DEBUG: Log processed data
+  const masukData = safeData.map(item => {
+    const value = parseInt(item['Total Masuk'], 10) || 0;
+    console.log(`Processing Total Masuk: ${item['Total Masuk']} -> ${value}`);
+    return value;
+  });
+
+  const keluarData = safeData.map(item => {
+    const value = parseInt(item['Total Keluar'], 10) || 0;
+    console.log(`Processing Total Keluar: ${item['Total Keluar']} -> ${value}`);
+    return value;
+  });
+
+  console.log('Final labels:', labels);
+  console.log('Final masukData:', masukData);
+  console.log('Final keluarData:', keluarData);
 
   const chartData = {
     labels,
     datasets: [
       {
         label: 'Total Masuk',
-        data: data.map(item => item.total_masuk),
+        data: masukData,
         backgroundColor: 'rgba(75, 192, 192, 0.6)', // Hijau Teal
         borderColor: 'rgba(75, 192, 192, 1)',
         borderWidth: 1,
       },
       {
         label: 'Total Keluar',
-        data: data.map(item => item.total_keluar),
-        backgroundColor: 'rgba(255, 99, 132, 0.6)', // Merah
+        data: keluarData,
+        backgroundColor: 'rgba(255, 99, 132, 0.6)',
         borderColor: 'rgba(255, 99, 132, 1)',
         borderWidth: 1,
       },
     ],
   };
+
+  console.log('Final chartData:', chartData);
+  console.log('=== End BarChart Debug ===');
 
   const options = {
     responsive: true,
@@ -95,6 +136,7 @@ const BarChart = ({ data, title }) => {
         }
       },
       y: {
+        beginAtZero: true,
         ticks: {
           color: '#666',
         },
@@ -104,6 +146,11 @@ const BarChart = ({ data, title }) => {
       }
     }
   };
+
+  if (safeData.length === 0) {
+    console.log('No data available, showing fallback message');
+    return <p>Data transaksi belum tersedia.</p>; 
+  }
 
   return <Bar data={chartData} options={options} />;
 };

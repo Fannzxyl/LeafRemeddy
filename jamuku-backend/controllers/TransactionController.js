@@ -19,8 +19,6 @@ export const getTransactions = (req, res) => {
     db.query(query, (err, results) => {
         if (err) {
             console.error("getTransactions: Error fetching transactions:", err);
-            // Untuk debugging, Anda bisa tambahkan detail error di sini.
-            // Di production, lebih baik hanya pesan umum.
             return res.status(500).json({ message: "Gagal mengambil data transaksi. Silakan cek log server untuk detail.", error: err.message });
         }
         console.log("getTransactions: Successfully fetched", results.length, "transactions."); // Log untuk debugging

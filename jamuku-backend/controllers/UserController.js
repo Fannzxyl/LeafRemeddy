@@ -33,18 +33,17 @@
     const { action } = req.body; // 'approve' atau 'reject'
     const managerId = req.user.id; // ID manager yang melakukan aksi
 
-    if (req.user.userRole !== "MANAGER") { // Menggunakan userRole untuk konsistensi
+    if (req.user.userRole !== "MANAGER") {
         return res.status(403).json({ message: "Akses ditolak. Hanya Manager yang bisa melakukan aksi ini." });
     }
 
-    // PERUBAHAN DI SINI: Dapatkan koneksi dari pool untuk transaksi
     db.getConnection((err, connection) => {
         if (err) {
         console.error("approveUserRequest: Gagal mendapatkan koneksi dari pool:", err);
         return res.status(500).json({ message: "Gagal memulai transaksi (koneksi database)." });
         }
 
-        connection.beginTransaction((err) => { // Gunakan 'connection.beginTransaction'
+        connection.beginTransaction((err) => { 
         if (err) {
             connection.release(); // Lepaskan koneksi jika beginTransaction gagal
             console.error("approveUserRequest: Transaction begin error:", err);
@@ -102,7 +101,7 @@
                 });
             }
 
-            connection.commit((err) => { // Gunakan 'connection.commit'
+            connection.commit((err) => { 
                 if (err) {
                 return connection.rollback(() => {
                     connection.release(); // Lepaskan koneksi setelah rollback
@@ -110,7 +109,7 @@
                     res.status(500).json({ message: "Gagal menyelesaikan proses persetujuan pengguna." });
                 });
                 }
-                connection.release(); // PENTING: Lepaskan koneksi setelah commit sukses
+                connection.release(); // Lepaskan koneksi setelah commit sukses
                 res.json({ message: successMessage });
             });
             });

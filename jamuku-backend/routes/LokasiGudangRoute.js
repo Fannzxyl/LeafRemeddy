@@ -4,9 +4,7 @@ import { verifyToken, verifyUser, verifyManager } from "../middleware/authMiddle
 
 const router = express.Router();
 
-// Asumsi Anda memiliki controller untuk Lokasi Gudang
 // Jika belum ada, Anda perlu membuat file controllers/LokasiGudangController.js
-// dengan fungsi-fungsi berikut (contoh struktur):
 /*
 // controllers/LokasiGudangController.js
 import db from "../db.js";

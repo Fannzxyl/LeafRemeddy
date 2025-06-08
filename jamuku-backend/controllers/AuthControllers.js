@@ -79,7 +79,7 @@ export const Login = (req, res) => {
       }
 
       const user = results[0];
-      console.log("Login: User data from DB:", user); // LOG: Data user dari DB
+      console.log("Login: User data from DB:", user); 
 
       if (user.status === 'pending') {
         console.log("Login: Account is pending approval.");
@@ -91,7 +91,7 @@ export const Login = (req, res) => {
       }
       if (user.status !== 'active') {
         console.log("Login: Account is not active (status:", user.status, ")");
-        return res.status(403).json({ message: "Akun Anda tidak aktif. Silakan hubungi Administrator." });
+        return res.status(403).json({ message: "Akun Anda tidak aktif. Silakan hubungi MANAGER." });
       }
 
       const match = (password === user.password);

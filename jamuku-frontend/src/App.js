@@ -1,31 +1,20 @@
+// src/App.js
 import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-// Loading Page
+// Import komponen-komponen halaman
 import LoadingPage from "./pages/LoadingPage";
-
-// Auth Pages
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
-
-// Role-based Dashboards
 import DashboardManager from "./pages/DashboardManager";
 import DashboardStaz from "./pages/DashboardStaz";
-
-// Inventory CRUD Components
 import ProductList from "./components/ProductList";
 import AddProduct from "./components/AddProduct";
 import EditProduct from "./components/EditProduct";
-
-// Warehouse Location
 import LokasiGudang from "./components/LokasiGudang";
-
-// Additional Features
 import UserList from "./pages/UserList";
 import TransactionList from "./pages/TransactionList";
 import AddTransaction from "./components/AddTransaction";
-
-// Route Protection
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -38,7 +27,9 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  if (!loadingComplete) return <LoadingPage />;
+  if (!loadingComplete) {
+    return <LoadingPage />;
+  }
 
   return (
     <BrowserRouter>
@@ -51,6 +42,8 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
 
         {/* Dashboard Routes - Role Specific */}
+        {/* Pastikan `requiredRole` atau `allowedRoles` dilewatkan sebagai string atau array literals.
+           Jika error di baris ini, kemungkinan ada kesalahan penulisan di `requiredRole="MANAGER"` */}
         <Route
           path="/dashboard-manager"
           element={
@@ -72,6 +65,7 @@ function App() {
         <Route
           path="/inventory"
           element={
+            // Pastikan array [ "STAZ", "MANAGER" ] ditulis dengan benar
             <ProtectedRoute allowedRoles={["STAZ", "MANAGER"]}>
               <ProductList />
             </ProtectedRoute>
@@ -130,12 +124,13 @@ function App() {
           }
         />
 
-        {/* Catch all - redirect to appropriate dashboard */}
+        {/* Catch all - rute fallback jika tidak ada yang cocok, akan dialihkan ke dashboard sesuai peran */}
         <Route
-          path="*"
+          path="*" 
           element={
             <ProtectedRoute>
-              <RedirectToDashboard />
+              {/* Ini adalah children dari ProtectedRoute */}
+              <RedirectToDashboard /> 
             </ProtectedRoute>
           }
         />
@@ -144,9 +139,9 @@ function App() {
   );
 }
 
-// Component untuk redirect ke dashboard yang sesuai
+// Komponen Pembantu: RedirectToDashboard
 const RedirectToDashboard = () => {
-  const role = localStorage.getItem("role");
+  const role = localStorage.getItem("userRole"); 
   
   if (role === "MANAGER") {
     return <Navigate to="/dashboard-manager" replace />;

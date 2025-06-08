@@ -22,23 +22,50 @@ export default function AddProduct() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      setUserRole(payload.role);
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setUserRole(payload.userRole);
+      } catch (e) {
+        console.error("Error parsing token:", e);
+      }
     }
 
     const fetchLocations = async () => {
+      console.log("AddProduct - Mencoba mengambil data lokasi..."); 
       try {
         const response = await axios.get(`${API_BASE}/api/locations`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
-        setLocations(response.data);
+        console.log("AddProduct - Data lokasi mentah dari server:", response.data); 
+        
+        // Validasi yang disesuaikan dengan struktur data aktual
+        if (Array.isArray(response.data)) {
+          // Filter lokasi yang valid menggunakan properti yang benar (nama dan alamat)
+          const validLocations = response.data.filter(loc => 
+            loc && loc.id && loc.nama // Menggunakan 'nama' bukan 'name'
+          );
+          
+          console.log("AddProduct - Lokasi valid setelah filter:", validLocations);
+          
+          if (validLocations.length > 0) {
+            setLocations(validLocations); 
+            console.log("AddProduct - State locations berhasil diupdate dengan data:", validLocations); 
+          } else {
+            console.error("AddProduct - Tidak ada lokasi valid yang ditemukan");
+            alert("Tidak ada lokasi valid yang ditemukan di database.");
+          }
+        } else {
+          console.error("AddProduct - Data yang diterima bukan array:", typeof response.data, response.data);
+          alert("Gagal memuat data lokasi: Format data tidak sesuai (bukan array).");
+        }
       } catch (error) {
-        console.error("Error fetching locations:", error);
-        alert("Gagal memuat data lokasi");
+        console.error("Error saat mengambil data lokasi (AddProduct frontend):", error.response?.data?.message || error.message);
+        alert("Gagal memuat data lokasi dari server. Periksa koneksi atau hubungi administrator.");
       }
     };
+    
     fetchLocations();
-  }, []);
+  }, []); 
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -48,12 +75,15 @@ export default function AddProduct() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    
     try {
+      // Validasi form
       if (!formData.namaProduk || !formData.kategori || !formData.stok || !formData.satuan || !formData.id_lokasi) {
         alert("Semua field wajib diisi!");
         setLoading(false);
         return;
       }
+      
       if (isNaN(formData.stok) || parseInt(formData.stok) < 0) {
         alert("Stok harus berupa angka positif!");
         setLoading(false);
@@ -73,13 +103,13 @@ export default function AddProduct() {
 
       if (response.data.type === 'direct') {
         alert("Produk berhasil ditambahkan!");
-        navigate("/products");
+        navigate("/inventory");
       } else if (response.data.type === 'approval_needed') {
         alert("Permintaan penambahan produk telah dikirim untuk approval. Manager akan meninjau permintaan Anda.");
         navigate("/transactions");
       }
     } catch (error) {
-      console.error("Error adding product:", error);
+      console.error("Error saat menambahkan produk:", error.response?.data?.message || error.message);
       const errorMessage = error.response?.data?.message || "Gagal menambahkan produk";
       alert(errorMessage);
     } finally {
@@ -91,13 +121,16 @@ export default function AddProduct() {
     <DashboardLayout>
       <div className="p-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-6">Tambah Produk</h1>
+        
         {userRole === 'STAZ' && (
           <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4">
             <strong>Info:</strong> Sebagai Staff, produk yang Anda tambahkan akan memerlukan persetujuan dari Manager terlebih dahulu.
           </div>
         )}
+        
         <div className="bg-white shadow rounded-lg p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Nama Produk */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Nama Produk
@@ -112,6 +145,8 @@ export default function AddProduct() {
                 required
               />
             </div>
+
+            {/* Kategori */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Kategori
@@ -132,6 +167,8 @@ export default function AddProduct() {
                 <option value="Pencernaan">Pencernaan</option>
               </select>
             </div>
+
+            {/* Stok */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Stok
@@ -147,6 +184,8 @@ export default function AddProduct() {
                 required
               />
             </div>
+
+            {/* Satuan */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Satuan
@@ -166,6 +205,8 @@ export default function AddProduct() {
                 <option value="gram">Gram</option>
               </select>
             </div>
+
+            {/* Status (hanya untuk Manager) */}
             {userRole === 'MANAGER' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -182,6 +223,8 @@ export default function AddProduct() {
                 </select>
               </div>
             )}
+
+            {/* Lokasi Gudang - PERBAIKAN UTAMA DI SINI */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Lokasi Gudang
@@ -194,18 +237,31 @@ export default function AddProduct() {
                 required
               >
                 <option value="">Pilih Lokasi Gudang</option>
+                {console.log("AddProduct - Merender dropdown dengan data locations:", locations)}
                 {locations.map((location) => (
                   <option key={location.id} value={location.id}>
+                    {/* UBAH: Gunakan 'nama' dan 'alamat' sesuai data API */}
                     {location.nama} - {location.alamat}
                   </option>
                 ))}
               </select>
+              
+              {/* Indikator loading atau kosong */}
+              {locations.length === 0 && (
+                <div className="text-yellow-600 text-sm mt-2">
+                  Loading lokasi gudang... (atau tidak ada data lokasi)
+                </div>
+              )}
+              
+              {/* Indikator sukses load data */}
+              {locations.length > 0 && (
+                <div className="text-green-600 text-sm mt-2">
+                  {locations.length} lokasi gudang berhasil dimuat
+                </div>
+              )}
             </div>
-            {locations.length === 0 && (
-              <div className="text-yellow-600 text-sm">
-                Loading lokasi gudang...
-              </div>
-            )}
+
+            {/* Tombol Submit dan Batal */}
             <div className="flex gap-4 pt-4">
               <button
                 type="submit"
@@ -218,7 +274,7 @@ export default function AddProduct() {
               </button>
               <button
                 type="button"
-                onClick={() => navigate("/products")}
+                onClick={() => navigate("/inventory")}
                 className="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-md font-medium"
               >
                 Batal

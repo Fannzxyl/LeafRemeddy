@@ -1,15 +1,16 @@
-// routes/DashboardRoute.js
-import express from "express";
-import {
-  getInventorySummaryByCategory,
-  getDailyTransactionSummary
-} from "../controllers/InventoryController.js"; // Fungsi controller masih di InventoryController
-import { verifyToken, verifyManager } from "../middleware/authMiddleware.js";
+  // routes/DashboardRoute.js
+  import express from 'express';
+  import DashboardController from '../controllers/DashboardController.js';
+  import { verifyToken } from '../middleware/authMiddleware.js'; // Mengimpor named exports
 
-const router = express.Router();
+  const router = express.Router();
 
-// Rute untuk data chart dashboard
-router.get("/inventory-summary-category", verifyToken, verifyManager, getInventorySummaryByCategory);
-router.get("/daily-transaction-summary", verifyToken, verifyManager, getDailyTransactionSummary);
+  router.use(verifyToken); // Semua route dashboard memerlukan authentication (verifikasi token)
 
-export default router;
+  router.get('/inventory-summary-category', DashboardController.getInventorySummaryByCategory);
+  router.get('/daily-transaction-summary', DashboardController.getDailyTransactionSummary); // DIAKTIFKAN KEMBALI
+  router.get('/metrics', DashboardController.getDashboardMetrics);
+  router.get('/recent-activities', DashboardController.getRecentActivities); // DIAKTIFKAN KEMBALI
+  router.get('/top-products', DashboardController.getTopProductsByStock);
+
+  export default router;
