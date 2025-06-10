@@ -14,7 +14,6 @@ export default function EditProduct() {
   const [locations, setLocations] = useState([]); // Untuk dropdown lokasi
   const [userRole, setUserRole] = useState(''); // Untuk menampilkan atau menyembunyikan status bagi manager
 
-  // --- START PERUBAHAN DI SINI UNTUK FETCHER SWR ---
   const fetcher = async (url) => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -31,29 +30,27 @@ export default function EditProduct() {
   };
 
   // Mengambil data produk berdasarkan ID menggunakan SWR
-  // Kunci SWR sekarang adalah URL lengkap
   const { data: productData, error: fetchError, isLoading: isProductLoading } = useSWR(`${API_BASE}/api/inventory/${id}`, fetcher);
-  // --- END PERUBAHAN DI SINI UNTUK FETCHER SWR ---
 
   const [formData, setFormData] = useState({
     namaProduk: "",
     kategori: "",
     stok: "",
     satuan: "",
-    status: "", // Status diambil dari data produk
+    status: "", 
     id_lokasi: ""
   });
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        setUserRole(payload.role);
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      setUserRole(payload.role);
     }
 
     const fetchLocations = async () => {
       try {
-        const token = localStorage.getItem('token'); // Pastikan token juga diambil untuk lokasi
+        const token = localStorage.getItem('token'); 
         const response = await axios.get(`${API_BASE}/api/locations`, {
             headers: { Authorization: `Bearer ${token}` }
         });
@@ -69,16 +66,18 @@ export default function EditProduct() {
   // Mengisi formData saat productData berhasil dimuat
   useEffect(() => {
     if (productData) {
+      // PERBAIKAN PENTING: Gunakan nullish coalescing (??) untuk menyediakan nilai default string kosong
+      // jika properti dari productData adalah null atau undefined.
       setFormData({
-        namaProduk: productData.namaProduk,
-        kategori: productData.kategori,
-        stok: productData.stok,
-        satuan: productData.satuan,
-        status: productData.status,
-        id_lokasi: productData.id_lokasi
+        namaProduk: productData.namaProduk ?? '', // ?? '' akan memastikan nilai selalu string
+        kategori: productData.kategori ?? '',
+        stok: productData.stok ?? '', 
+        satuan: productData.satuan ?? '',
+        status: productData.status ?? '',
+        id_lokasi: productData.id_lokasi ?? ''
       });
     }
-  }, [productData]);
+  }, [productData]); // Jalankan efek ini setiap kali productData berubah
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -100,7 +99,7 @@ export default function EditProduct() {
         return;
       }
 
-      const token = localStorage.getItem('token'); // Ambil token untuk permintaan PUT
+      const token = localStorage.getItem('token'); 
       if (!token) {
         alert("Anda tidak memiliki izin. Silakan login.");
         setLoadingUpdate(false);
@@ -115,7 +114,7 @@ export default function EditProduct() {
         status: formData.status,
         id_lokasi: parseInt(formData.id_lokasi)
       }, {
-        headers: { Authorization: `Bearer ${token}` } // Sertakan token di header PUT
+        headers: { Authorization: `Bearer ${token}` } 
       });
       alert("Produk berhasil diupdate!");
       navigate("/products");
@@ -128,7 +127,6 @@ export default function EditProduct() {
     }
   };
 
-  // Penanganan error untuk pemuatan awal produk
   if (fetchError) {
     let errorMessage = "Gagal memuat data produk.";
     if (fetchError.response?.status === 403 || fetchError.status === 403) {
@@ -147,7 +145,6 @@ export default function EditProduct() {
     );
   }
 
-  // Penanganan loading untuk pemuatan awal produk
   if (isProductLoading || !productData) {
     return (
       <DashboardLayout>

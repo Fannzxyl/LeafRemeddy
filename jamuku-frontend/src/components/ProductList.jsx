@@ -69,7 +69,7 @@ export default function ProductList() {
           Authorization: `Bearer ${token}`
         }
       });
-      mutate(`${API_BASE}/api/inventory`); // Mutate dengan kunci SWR yang benar
+      mutate(`${API_BASE}/api/inventory`);
       alert("Produk berhasil dihapus!");
     } catch (err) {
       alert("Gagal menghapus produk: " + (err.response?.data?.message || err.message));
@@ -90,27 +90,17 @@ export default function ProductList() {
         <div className="overflow-x-auto bg-white shadow rounded">
           <table className="min-w-[900px] text-sm text-left text-gray-700">
             <thead className="bg-gray-100 text-xs uppercase">
+              {/* PERBAIKAN UTAMA: Hapus spasi/newline di antara <th> */}
               <tr>
-                <th className="p-3 text-center">No</th>
-                <th className="p-3">Nama Produk</th> {/* Header kolom */}
-                <th className="p-3">Kategori</th>
-                <th className="p-3">Stok</th>
-                <th className="p-3">Satuan</th>
-                <th className="p-3">Status</th>
-                <th className="p-3">Lokasi</th> {/* Header lokasi */}
-                <th className="p-3 text-center">Aksi</th>
+                <th className="p-3 text-center">No</th><th className="p-3">Nama Produk</th><th className="p-3">Kategori</th><th className="p-3">Stok</th><th className="p-3">Satuan</th><th className="p-3">Status</th><th className="p-3">Lokasi</th><th className="p-3 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody>
               {data && data.length > 0 ? (
                 data.map((product, index) => (
                   <tr key={product.id} className="border-t hover:bg-gray-50">
-                    <td className="p-3 text-center">{index + 1}</td>
-                    <td className="p-3">{product.name}</td> {/* KOREKSI: Gunakan product.name */}
-                    <td className="p-3">{product.kategori}</td>
-                    <td className="p-3">{product.stok}</td>
-                    <td className="p-3">{product.satuan}</td>
-                    <td className="p-3">
+                    {/* PERBAIKAN: Hapus spasi/newline di antara <td> */}
+                    <td className="p-3 text-center">{index + 1}</td><td className="p-3">{product.name}</td><td className="p-3">{product.kategori}</td><td className="p-3">{product.stok}</td><td className="p-3">{product.satuan}</td><td className="p-3">
                       <span
                         className={`px-2 py-1 rounded text-xs font-semibold ${
                           product.status === "ACTIVE" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
@@ -118,9 +108,7 @@ export default function ProductList() {
                       >
                         {product.status}
                       </span>
-                    </td>
-                    <td className="p-3">{product.lokasi}</td> {/* Kolom lokasi */}
-                    <td className="p-3 text-center space-x-2">
+                    </td><td className="p-3">{product.lokasi}</td><td className="p-3 text-center space-x-2">
                       <Link
                         to={`/edit/${product.id}`}
                         className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
@@ -138,7 +126,7 @@ export default function ProductList() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="text-center p-4 text-gray-500">
+                  <td colSpan="8" className="text-center p-4 text-gray-500">
                     Belum ada produk.
                   </td>
                 </tr>

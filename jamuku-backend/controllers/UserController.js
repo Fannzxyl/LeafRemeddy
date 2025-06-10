@@ -1,119 +1,102 @@
-    // controllers/UserController.js
-    import db from "../db.js";
+// controllers/UserController.js
+import db from "../db.js"; // db sekarang adalah instance pool yang berbasis Promise
 
-    // ... (fungsi getUsers tetap sama) ...
+export const getUsers = async (req, res) => { // Mengubah ke async
+    try {
+        // PERBAIKAN: Menggunakan req.user.userRole (dari decoded token)
+        const { userRole: requesterRole } = req.user; 
 
-    export const getUsers = (req, res) => {
-    const { role: requesterRole, id: requesterId } = req.user;
+        let query = `
+            SELECT id, username, role, status, created_at, approved_by, approved_at
+            FROM users
+        `;
+        let values = []; // Parameter untuk query jika ada WHERE clause
 
-    let query = `
-        SELECT id, username, role, status, created_at, approved_by, approved_at
-        FROM users
-    `;
-    let values = [];
-
-    if (requesterRole === "STAZ") {
-        query += ` WHERE status = 'active'`;
-    }
-
-    query += ` ORDER BY id DESC`;
-
-    db.query(query, values, (err, results) => {
-        if (err) {
-        console.error("Error fetching users:", err);
-        return res.status(500).json({ message: "Gagal mengambil daftar pengguna" });
+        // Jika user adalah STAZ, hanya tampilkan user dengan status 'active'
+        if (requesterRole === "STAZ") {
+            query += ` WHERE status = 'active'`;
         }
+
+        query += ` ORDER BY id DESC`;
+
+        // Menggunakan await db.query() untuk Promise-based query
+        const [results] = await db.query(query, values); // Gunakan 'values' meskipun kosong untuk konsistensi
+
         res.json(results);
-    });
-    };
+    } catch (err) {
+        console.error("Error fetching users:", err);
+        res.status(500).json({ message: "Gagal mengambil daftar pengguna", error: err.message });
+    }
+};
 
 
-    export const approveUserRequest = (req, res) => {
+export const approveUserRequest = async (req, res) => { // Mengubah ke async
     const { id } = req.params; // ID user yang akan di-approve/reject
     const { action } = req.body; // 'approve' atau 'reject'
-    const managerId = req.user.id; // ID manager yang melakukan aksi
+    // PERBAIKAN PENTING: Menggunakan req.userIdFromToken dan menambahkan ?? null
+    const managerId = req.userIdFromToken ?? null; 
+    // PERBAIKAN PENTING: Menggunakan req.userRoleFromToken
+    const managerRole = req.userRoleFromToken; 
 
-    if (req.user.userRole !== "MANAGER") {
+    if (managerRole !== "MANAGER") { 
         return res.status(403).json({ message: "Akses ditolak. Hanya Manager yang bisa melakukan aksi ini." });
     }
 
-    db.getConnection((err, connection) => {
-        if (err) {
-        console.error("approveUserRequest: Gagal mendapatkan koneksi dari pool:", err);
-        return res.status(500).json({ message: "Gagal memulai transaksi (koneksi database)." });
-        }
+    let connection; // Deklarasikan connection di luar try
 
-        connection.beginTransaction((err) => { 
-        if (err) {
-            connection.release(); // Lepaskan koneksi jika beginTransaction gagal
-            console.error("approveUserRequest: Transaction begin error:", err);
-            return res.status(500).json({ message: "Gagal memulai transaksi." });
-        }
+    try {
+        connection = await db.getConnection(); // Dapatkan koneksi berbasis Promise
+        await connection.beginTransaction(); // Mulai transaksi
 
         const getUserQuery = `
             SELECT id, username, role, status FROM users WHERE id = ? AND status = 'pending'
         `;
-        connection.query(getUserQuery, [id], (err, results) => { // Gunakan 'connection.query'
-            if (err) {
-            return connection.rollback(() => {
-                connection.release(); // Lepaskan koneksi setelah rollback
-                console.error("approveUserRequest: Error fetching user for approval:", err);
-                res.status(500).json({ message: "Gagal mengambil detail pengguna." });
-            });
-            }
+        // Menggunakan await connection.execute()
+        const [results] = await connection.execute(getUserQuery, [id]);
 
-            if (results.length === 0) {
-            return connection.rollback(() => {
-                connection.release(); // Lepaskan koneksi setelah rollback
-                res.status(404).json({ message: "Permintaan pengguna tidak ditemukan atau sudah diproses." });
-            });
-            }
+        if (results.length === 0) {
+            await connection.rollback();
+            connection.release();
+            return res.status(404).json({ message: "Permintaan pengguna tidak ditemukan atau sudah diproses." });
+        }
 
-            const userRequest = results[0];
-            let newStatus;
-            let successMessage;
+        const userRequest = results[0];
+        let newStatus;
+        let successMessage;
 
-            if (action === 'approve') {
+        if (action === 'approve') {
             newStatus = 'active';
             successMessage = `Pengguna '${userRequest.username}' berhasil disetujui dan diaktifkan.`;
-            } else if (action === 'reject') {
+        } else if (action === 'reject') {
             newStatus = 'rejected';
             successMessage = `Permintaan pengguna '${userRequest.username}' berhasil ditolak.`;
-            } else {
-            return connection.rollback(() => {
-                connection.release(); // Lepaskan koneksi jika aksi tidak valid
-                res.status(400).json({ message: "Aksi tidak valid. Gunakan 'approve' atau 'reject'." });
-            });
-            }
+        } else {
+            await connection.rollback();
+            connection.release();
+            return res.status(400).json({ message: "Aksi tidak valid. Gunakan 'approve' atau 'reject'." });
+        }
 
-            const updateStatusQuery = `
+        const updateStatusQuery = `
             UPDATE users
             SET status = ?, approved_by = ?, approved_at = NOW()
             WHERE id = ?
-            `;
+        `;
 
-            connection.query(updateStatusQuery, [newStatus, managerId, id], (err) => { // Gunakan 'connection.query'
-            if (err) {
-                return connection.rollback(() => {
-                connection.release(); // Lepaskan koneksi setelah rollback
-                console.error("approveUserRequest: Error updating user status:", err);
-                res.status(500).json({ message: "Gagal memperbarui status pengguna." });
-                });
-            }
+        // Menggunakan await connection.execute()
+        await connection.execute(updateStatusQuery, [newStatus, managerId, id]); // managerId sekarang akan menjadi null jika undefined
 
-            connection.commit((err) => { 
-                if (err) {
-                return connection.rollback(() => {
-                    connection.release(); // Lepaskan koneksi setelah rollback
-                    console.error("approveUserRequest: Transaction commit error for user approval:", err);
-                    res.status(500).json({ message: "Gagal menyelesaikan proses persetujuan pengguna." });
-                });
-                }
-                connection.release(); // Lepaskan koneksi setelah commit sukses
-                res.json({ message: successMessage });
-            });
-            });
-        });
-        });
-    });
-    };
+        await connection.commit(); // Commit transaksi
+        res.json({ message: successMessage });
+
+    } catch (err) {
+        if (connection) { // Pastikan connection ada sebelum rollback
+            await connection.rollback(); // Rollback transaksi jika ada error
+        }
+        console.error("approveUserRequest: Error during user approval transaction:", err);
+        res.status(500).json({ message: "Gagal memproses persetujuan pengguna.", error: err.message });
+    } finally {
+        if (connection) { // Pastikan connection ada sebelum dilepaskan
+            connection.release(); // Lepaskan koneksi
+        }
+    }
+};

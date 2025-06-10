@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import DashboardLayout from "../layouts/DashboardLayout";
 import axios from "axios";
+import { Link } from "react-router-dom"; // <-- Import Link
 
 const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
 
@@ -15,7 +16,6 @@ export default function TransactionList() {
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        // PERBAIKAN: Mengambil 'userRole' dari payload token
         setCurrentUserRole(payload.userRole);
         console.log("Frontend TransactionList: Current User Role from Token:", payload.userRole);
       } catch (e) {
@@ -24,10 +24,10 @@ export default function TransactionList() {
       }
     }
     fetchTransactions();
-  }, []); // [] agar hanya dijalankan sekali setelah render pertama
+  }, []);
 
   const fetchTransactions = async () => {
-    setIsLoading(true); // Mulai loading saat fetch
+    setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -44,12 +44,11 @@ export default function TransactionList() {
       console.error("Error fetching transactions:", err);
       setError(err.response?.data?.message || "Gagal memuat transaksi");
     } finally {
-      setIsLoading(false); // Selesai loading
+      setIsLoading(false);
     }
   };
 
   const handleApproval = async (transactionId, action) => {
-    // Validasi role di frontend sebelum memanggil backend
     if (currentUserRole !== 'MANAGER') {
       alert("Akses ditolak. Hanya Manager yang bisa melakukan aksi ini.");
       return;
@@ -79,6 +78,16 @@ export default function TransactionList() {
     <DashboardLayout>
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-extrabold text-gray-900 mb-8">Daftar Transaksi</h1>
+        
+        {/* Tombol "Tambah Transaksi" baru di sini */}
+        <div className="mb-6">
+          <Link
+            to="/add-transaction" // Mengarah ke rute yang sudah kita definisikan di App.js
+            className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow"
+          >
+            Tambah Transaksi Stok
+          </Link>
+        </div>
 
         {error ? (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 shadow-md">
@@ -98,41 +107,15 @@ export default function TransactionList() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th key="th-tanggal" scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Tanggal
-                  </th>
-                  <th key="th-user" scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    User
-                  </th>
-                  <th key="th-produk" scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Produk
-                  </th>
-                  <th key="th-jumlah" scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Jumlah
-                  </th>
-                  <th key="th-tipe" scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Tipe
-                  </th>
-                  <th key="th-status" scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th key="th-lokasi" scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Lokasi
-                  </th>
-                  {currentUserRole === 'MANAGER' && ( // Hanya render kolom Aksi jika user adalah MANAGER
-                    <th key="th-aksi" scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                      Aksi
-                    </th>
+                  <th key="th-tanggal" scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Tanggal</th><th key="th-user" scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">User</th><th key="th-produk" scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Produk</th><th key="th-jumlah" scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Jumlah</th><th key="th-tipe" scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Tipe</th><th key="th-status" scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Status</th><th key="th-lokasi" scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Lokasi</th>
+                  {currentUserRole === 'MANAGER' && (
+                    <th key="th-aksi" scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Aksi</th>
                   )}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {transactions.length === 0 ? (
-                  <tr>
-                    <td colSpan={currentUserRole === 'MANAGER' ? "8" : "7"} className="px-6 py-6 text-center text-gray-500 text-base">
-                      Tidak ada transaksi yang ditemukan.
-                    </td>
-                  </tr>
+                  <tr><td colSpan={currentUserRole === 'MANAGER' ? "8" : "7"} className="px-6 py-6 text-center text-gray-500 text-base">Tidak ada transaksi yang ditemukan.</td></tr>
                 ) : (
                   transactions.map((trx, i) => (
                     <tr
@@ -145,44 +128,38 @@ export default function TransactionList() {
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                         {trx.tanggal?.split("T")[0]}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                      </td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                         {trx.created_by_name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                        {trx.namaProduk}
+                      </td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                         {trx.transaction_type === 'add_product' && (
                           <span className="ml-2 px-2.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded-full border border-blue-200">
                             Produk Baru
                           </span>
                         )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                        {trx.namaProduk}
+                      </td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                         {trx.transaction_type === 'add_product' && trx.status === 'pending'
-                           ? trx.requested_stok
-                           : trx.jumlah
+                            ? trx.requested_stok
+                            : trx.jumlah
                         }
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                      </td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                         <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full
                           ${ trx.tipe === 'masuk' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }`}>
                           {trx.tipe}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                      </td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                         <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full
                           ${ trx.status === 'approved' ? 'bg-green-100 text-green-800' :
-                             trx.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                             'bg-yellow-100 text-yellow-800' }`}>
+                              trx.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800' }`}>
                           {trx.status}
                         </span>
+                      </td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                        {trx.id_lokasi}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                        {trx.id_lokasi} {/* Tampilkan ID lokasi, jika ingin nama lokasi, perlu JOIN di backend */}
-                      </td>
-                      {currentUserRole === 'MANAGER' && ( // Kondisi untuk kolom Aksi
+                      {currentUserRole === 'MANAGER' && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                          {trx.status === 'pending' && ( // Kondisi untuk tombol Setujui/Tolak
+                          {trx.status === 'pending' && (
                             <>
                               <button
                                 onClick={() => handleApproval(trx.id, 'approve')}

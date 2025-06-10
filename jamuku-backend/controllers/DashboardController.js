@@ -12,7 +12,8 @@ class DashboardController {
         GROUP BY kategori
         ORDER BY totalStock DESC;
       `;
-      const [rows] = await db.promise().query(query);
+      // PERBAIKAN: Mengganti db.promise().query() menjadi db.query()
+      const [rows] = await db.query(query); 
 
       const formattedData = rows.map(item => ({
         name: item.kategori || 'Tidak Berkategori',
@@ -37,7 +38,6 @@ class DashboardController {
       const startDate = new Date(endDate);
       startDate.setDate(endDate.getDate() - (days - 1)); // Mundur 'days - 1' hari untuk mencakup hari ini
 
-      // QUERY BARU - DENGAN JOIN dan FILTER STATUS ACTIVE
       const query = `
         SELECT 
             DATE(t.tanggal) as date, 
@@ -55,7 +55,8 @@ class DashboardController {
       const startDateFormat = startDate.toISOString().split('T')[0];
       const endDateFormat = endDate.toISOString().split('T')[0];
 
-      const [transactionSummaryRaw] = await db.promise().query(query, [startDateFormat, endDateFormat]);
+      // PERBAIKAN: Mengganti db.promise().query() menjadi db.query()
+      const [transactionSummaryRaw] = await db.query(query, [startDateFormat, endDateFormat]);
       console.log("Backend Raw Transaction Summary (DashboardController - FIXED):", transactionSummaryRaw);
 
       // Inisialisasi dateMap untuk semua hari dalam range
@@ -107,23 +108,23 @@ class DashboardController {
   // Get dashboard metrics
   static async getDashboardMetrics(req, res) {
     try {
-      const [totalItemsResult] = await db.promise().query('SELECT COUNT(*) as count FROM inventories WHERE status = "ACTIVE";');
+      // PERBAIKAN: Mengganti db.promise().query() menjadi db.query() di setiap panggilan
+      const [totalItemsResult] = await db.query('SELECT COUNT(*) as count FROM inventories WHERE status = "ACTIVE";');
       const totalProducts = totalItemsResult[0].count;
 
-      const [lowStockItemsResult] = await db.promise().query('SELECT COUNT(*) as count FROM inventories WHERE stok < 10 AND stok > 0 AND status = "ACTIVE";');
+      const [lowStockItemsResult] = await db.query('SELECT COUNT(*) as count FROM inventories WHERE stok < 10 AND stok > 0 AND status = "ACTIVE";');
       const lowStockItems = lowStockItemsResult[0].count;
 
-      const [pendingTransactionsResult] = await db.promise().query("SELECT COUNT(*) as count FROM transactions WHERE status = 'pending';");
+      const [pendingTransactionsResult] = await db.query("SELECT COUNT(*) as count FROM transactions WHERE status = 'pending';");
       const pendingTransactions = pendingTransactionsResult[0].count;
 
-      const [pendingUsersResult] = await db.promise().query("SELECT COUNT(*) as count FROM users WHERE status = 'pending';");
+      const [pendingUsersResult] = await db.query("SELECT COUNT(*) as count FROM users WHERE status = 'pending';");
       const pendingUsers = pendingUsersResult[0].count;
 
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       
-      // FIXED: Filter hanya transaksi dari produk ACTIVE
-      const [recentTransactionsResult] = await db.promise().query(`
+      const [recentTransactionsResult] = await db.query(`
         SELECT COUNT(*) as count 
         FROM transactions t
         LEFT JOIN inventories i ON t.id_inventories = i.id
@@ -132,7 +133,7 @@ class DashboardController {
       `, [sevenDaysAgo.toISOString().split('T')[0]]);
       const recentTransactions = recentTransactionsResult[0].count;
 
-      const [inventoryValueResult] = await db.promise().query('SELECT SUM(stok) as totalStockValue FROM inventories WHERE status = "ACTIVE";');
+      const [inventoryValueResult] = await db.query('SELECT SUM(stok) as totalStockValue FROM inventories WHERE status = "ACTIVE";');
       const inventoryValue = inventoryValueResult[0].totalStockValue || 0;
 
       res.json({
@@ -158,7 +159,6 @@ class DashboardController {
     try {
       const limit = parseInt(req.query.limit) || 10;
 
-      // FIXED: Filter hanya transaksi dari produk ACTIVE
       const query = `
         SELECT
           t.id,
@@ -176,7 +176,8 @@ class DashboardController {
         ORDER BY t.tanggal DESC, t.id DESC
         LIMIT ?;
       `;
-      const [recentTransactions] = await db.promise().query(query, [limit]);
+      // PERBAIKAN: Mengganti db.promise().query() menjadi db.query()
+      const [recentTransactions] = await db.query(query, [limit]);
 
       const activities = recentTransactions.map(transaction => ({
         id: transaction.id,
@@ -210,7 +211,8 @@ class DashboardController {
         ORDER BY stok DESC
         LIMIT ?;
       `;
-      const [topProducts] = await db.promise().query(query, [limit]);
+      // PERBAIKAN: Mengganti db.promise().query() menjadi db.query()
+      const [topProducts] = await db.query(query, [limit]);
 
       res.json(topProducts);
     } catch (error) {

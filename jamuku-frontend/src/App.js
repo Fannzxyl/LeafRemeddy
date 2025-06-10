@@ -8,25 +8,29 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import DashboardManager from "./pages/DashboardManager";
 import DashboardStaz from "./pages/DashboardStaz";
-import ProductList from "./components/ProductList";
-import AddProduct from "./components/AddProduct";
-import EditProduct from "./components/EditProduct";
-import LokasiGudang from "./components/LokasiGudang";
+// KOREKSI: Mengembalikan path ke components/ karena file kemungkinan masih di sana
+import ProductList from "./components/ProductList"; // <-- PATH KEMBALI KE components/
+import AddProduct from "./components/AddProduct";   // <-- PATH KEMBALI KE components/
+import EditProduct from "./components/EditProduct"; // Tetap di components/
+import LokasiGudang from "./components/LokasiGudang"; // Tetap di components/
 import UserList from "./pages/UserList";
 import TransactionList from "./pages/TransactionList";
-import AddTransaction from "./components/AddTransaction";
+// KOREKSI: Mengembalikan path ke components/ untuk AddTransaction juga
+import AddTransaction from "./components/AddTransaction"; // <-- PATH KEMBALI KE components/
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   const [loadingComplete, setLoadingComplete] = useState(false);
 
+  // Efek untuk menampilkan LoadingPage selama beberapa waktu
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoadingComplete(true);
-    }, 2500);
-    return () => clearTimeout(timer);
+    }, 2500); // Tampilkan loading selama 2.5 detik
+    return () => clearTimeout(timer); // Bersihkan timer saat komponen unmount
   }, []);
 
+  // Jika loading belum selesai, tampilkan LoadingPage
   if (!loadingComplete) {
     return <LoadingPage />;
   }
@@ -41,9 +45,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
 
-        {/* Dashboard Routes - Role Specific */}
-        {/* Pastikan `requiredRole` atau `allowedRoles` dilewatkan sebagai string atau array literals.
-           Jika error di baris ini, kemungkinan ada kesalahan penulisan di `requiredRole="MANAGER"` */}
+        {/* Dashboard Routes - Spesifik untuk peran (role) */}
         <Route
           path="/dashboard-manager"
           element={
@@ -61,11 +63,10 @@ function App() {
           }
         />
 
-        {/* Inventory Routes - STAZ & MANAGER dapat akses */}
+        {/* Inventory Routes - Dapat diakses oleh STAZ & MANAGER */}
         <Route
           path="/inventory"
           element={
-            // Pastikan array [ "STAZ", "MANAGER" ] ditulis dengan benar
             <ProtectedRoute allowedRoles={["STAZ", "MANAGER"]}>
               <ProductList />
             </ProtectedRoute>
@@ -88,7 +89,7 @@ function App() {
           }
         />
 
-        {/* Transaction Routes - STAZ & MANAGER dapat akses */}
+        {/* Transaction Routes - Dapat diakses oleh STAZ & MANAGER */}
         <Route
           path="/transactions"
           element={
@@ -98,7 +99,7 @@ function App() {
           }
         />
         <Route
-          path="/add-transaction"
+          path="/add-transaction" // <-- RUTE BARU UNTUK TAMBAH TRANSAKSI
           element={
             <ProtectedRoute allowedRoles={["STAZ", "MANAGER"]}>
               <AddTransaction />
@@ -106,7 +107,7 @@ function App() {
           }
         />
 
-        {/* Manager Only Routes */}
+        {/* Rute Khusus Manager */}
         <Route
           path="/users"
           element={
@@ -129,7 +130,7 @@ function App() {
           path="*" 
           element={
             <ProtectedRoute>
-              {/* Ini adalah children dari ProtectedRoute */}
+              {/* Komponen pembantu untuk mengarahkan ke dashboard yang benar */}
               <RedirectToDashboard /> 
             </ProtectedRoute>
           }
@@ -140,6 +141,7 @@ function App() {
 }
 
 // Komponen Pembantu: RedirectToDashboard
+// Bertanggung jawab untuk mengarahkan pengguna ke dashboard yang sesuai berdasarkan perannya
 const RedirectToDashboard = () => {
   const role = localStorage.getItem("userRole"); 
   
@@ -148,7 +150,7 @@ const RedirectToDashboard = () => {
   } else if (role === "STAZ") {
     return <Navigate to="/dashboard-staz" replace />;
   } else {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace />; // Jika tidak ada role atau tidak dikenal, arahkan ke login
   }
 };
 
