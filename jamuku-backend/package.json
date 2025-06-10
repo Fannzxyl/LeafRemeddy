@@ -1,14 +1,21 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Backend API for Jamuku application (Express.js and MySQL)",
   "type": "module",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js", 
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "express",
+    "mysql",
+    "backend",
+    "jamuku",
+    "api"
+  ],
+  "author": "Alfan",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.2",
@@ -23,5 +30,8 @@
     "sequelize": "^6.37.7",
     "socket.io": "^4.8.1",
     "web-vitals": "^5.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1" 
   }
 }
