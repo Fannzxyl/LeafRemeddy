@@ -15,69 +15,72 @@ export default function AddProduct() {
     kategori: "",
     stok: "",
     satuan: "",
-    status: "ACTIVE",
+    status: "ACTIVE", // Default untuk Manager, akan diabaikan/diubah untuk STAZ di backend
     id_lokasi: ""
   });
 
   useEffect(() => {
+    // Ini berfungsi untuk mendapatkan peran user dari token di localStorage.
     const token = localStorage.getItem('token');
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         setUserRole(payload.userRole);
       } catch (e) {
-        console.error("Error parsing token:", e);
+        console.error("Error parsing token in AddProduct:", e); // Tetap log error penting
       }
     }
 
+    // Ini berfungsi untuk mengambil daftar lokasi dari backend.
     const fetchLocations = async () => {
-      console.log("AddProduct - Mencoba mengambil data lokasi..."); 
+      // console.log("AddProduct - Mencoba mengambil data lokasi..."); // Dihapus
       try {
         const response = await axios.get(`${API_BASE}/api/locations`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
-        console.log("AddProduct - Data lokasi mentah dari server:", response.data); 
+        // console.log("AddProduct - Data lokasi mentah dari server:", response.data); // Dihapus
         
-        // Validasi yang disesuaikan dengan struktur data aktual
+        // Ini berfungsi untuk memvalidasi dan memfilter data lokasi yang valid.
         if (Array.isArray(response.data)) {
-          // Filter lokasi yang valid menggunakan properti yang benar (nama dan alamat)
           const validLocations = response.data.filter(loc => 
-            loc && loc.id && loc.nama // Menggunakan 'nama' bukan 'name'
+            loc && loc.id && loc.nama // Menggunakan 'nama' sesuai skema DB
           );
           
-          console.log("AddProduct - Lokasi valid setelah filter:", validLocations);
+          // console.log("AddProduct - Lokasi valid setelah filter:", validLocations); // Dihapus
           
           if (validLocations.length > 0) {
             setLocations(validLocations); 
-            console.log("AddProduct - State locations berhasil diupdate dengan data:", validLocations); 
+            // console.log("AddProduct - State locations berhasil diupdate dengan data:", validLocations); // Dihapus
           } else {
-            console.error("AddProduct - Tidak ada lokasi valid yang ditemukan");
+            console.error("AddProduct - Tidak ada lokasi valid yang ditemukan"); // Tetap log error penting
             alert("Tidak ada lokasi valid yang ditemukan di database.");
           }
         } else {
-          console.error("AddProduct - Data yang diterima bukan array:", typeof response.data, response.data);
+          console.error("AddProduct - Data yang diterima bukan array:", typeof response.data, response.data); // Tetap log error penting
           alert("Gagal memuat data lokasi: Format data tidak sesuai (bukan array).");
         }
       } catch (error) {
-        console.error("Error saat mengambil data lokasi (AddProduct frontend):", error.response?.data?.message || error.message);
+        console.error("Error saat mengambil data lokasi (AddProduct frontend):", error.response?.data?.message || error.message); // Tetap log error penting
         alert("Gagal memuat data lokasi dari server. Periksa koneksi atau hubungi administrator.");
       }
     };
     
     fetchLocations();
-  }, []); 
+  }, []); // Dependency kosong, hanya berjalan sekali saat mount.
 
+  // Ini berfungsi untuk memperbarui state formData saat input berubah.
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Ini berfungsi untuk menangani submit form penambahan produk.
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+    e.preventDefault(); // Mencegah reload halaman.
+    setLoading(true); // Menampilkan indikator loading.
     
     try {
-      // Validasi form
+      // Ini berfungsi untuk validasi form sebelum mengirim request.
       if (!formData.namaProduk || !formData.kategori || !formData.stok || !formData.satuan || !formData.id_lokasi) {
         alert("Semua field wajib diisi!");
         setLoading(false);
@@ -90,30 +93,33 @@ export default function AddProduct() {
         return;
       }
 
+      // Ini berfungsi untuk mengirim permintaan POST ke endpoint '/api/inventory'.
       const response = await axios.post(`${API_BASE}/api/inventory`, {
         namaProduk: formData.namaProduk,
         kategori: formData.kategori,
         stok: parseInt(formData.stok),
         satuan: formData.satuan,
-        status: formData.status,
+        status: formData.status, // Status hanya relevan untuk Manager, akan diabaikan/diubah backend untuk STAZ
         id_lokasi: parseInt(formData.id_lokasi)
       }, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
 
+      // Ini berfungsi untuk menampilkan pesan sukses dan mengarahkan pengguna.
       if (response.data.type === 'direct') {
         alert("Produk berhasil ditambahkan!");
         navigate("/inventory");
       } else if (response.data.type === 'approval_needed') {
         alert("Permintaan penambahan produk telah dikirim untuk approval. Manager akan meninjau permintaan Anda.");
-        navigate("/transactions");
+        navigate("/transactions"); // Arahkan ke halaman transaksi pending
       }
     } catch (error) {
-      console.error("Error saat menambahkan produk:", error.response?.data?.message || error.message);
+      // Ini berfungsi untuk menangani error dari permintaan HTTP.
+      console.error("Error saat menambahkan produk:", error.response?.data?.message || error.message); // Tetap log error penting
       const errorMessage = error.response?.data?.message || "Gagal menambahkan produk";
       alert(errorMessage);
     } finally {
-      setLoading(false);
+      setLoading(false); // Mengakhiri indikator loading.
     }
   };
 
@@ -237,11 +243,10 @@ export default function AddProduct() {
                 required
               >
                 <option value="">Pilih Lokasi Gudang</option>
-                {console.log("AddProduct - Merender dropdown dengan data locations:", locations)}
+                {/* Pastikan `location.id` dan `location.nama` sesuai dengan respons API dari backend */}
                 {locations.map((location) => (
                   <option key={location.id} value={location.id}>
-                    {/* UBAH: Gunakan 'nama' dan 'alamat' sesuai data API */}
-                    {location.nama} - {location.alamat}
+                    {location.nama} - {location.alamat} {/* Menggunakan 'nama' dan 'alamat' sesuai skema DB */}
                   </option>
                 ))}
               </select>

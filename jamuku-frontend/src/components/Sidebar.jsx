@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
-// Menerima props baru dari DashboardLayout
 const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isSidebarOpen, toggleMobileSidebar }) => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -26,7 +25,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isSidebarOpen, toggleM
         navigate('/login');
     };
 
-    const menuItems = [
+    const menuItems = useMemo(() => [
         { path: dashboardPath, icon: '🏠', label: 'Dashboard' },
         { path: '/inventory', icon: '📦', label: 'Inventory' },
         { path: '/transactions', icon: '📋', label: 'Transaksi' },
@@ -34,93 +33,125 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isSidebarOpen, toggleM
             { path: '/users', icon: '👥', label: 'User List' },
             { path: '/lokasi-gudang', icon: '🏢', label: 'Lokasi Gudang' }
         ] : [])
-    ];
+    ], [dashboardPath, role]);
 
     return (
-        <div className={`
-            fixed left-0 top-0 h-full bg-gradient-to-b from-green-800 to-green-900 text-white shadow-2xl
-            transition-all duration-300 z-50
-            ${isMobile ?
-                (isSidebarOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full') :
-                (isCollapsed ? 'w-20' : 'w-64')
-            }
-            ${!isMobile && 'block'}
-        `}>
-            {/* Header */}
-            <div className="p-6 border-b border-green-700">
-                <div className="flex items-center justify-between">
-                    <div className={`flex items-center gap-3 ${isCollapsed && (!isMobile) ? 'justify-center' : ''}`}> {/* Perbaikan di sini */}
+        <>
+            {isMobile && isSidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 opacity-100"
+                    onClick={toggleMobileSidebar}
+                ></div>
+            )}
+
+            <div className={`
+                fixed left-0 top-0 h-full bg-gradient-to-b from-green-800 to-green-900 text-white shadow-2xl
+                transition-all duration-300 ease-in-out z-50 overflow-hidden flex flex-col
+                ${isMobile
+                    ? (isSidebarOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full')
+                    : (isCollapsed ? 'w-20' : 'w-64')
+                }
+                ${!isMobile && 'block'}
+            `}>
+                {/* Header Sidebar with logo above text */}
+                <div className="p-4 border-b border-green-700 relative">
+                    <div className={`flex flex-col items-center transition-all duration-300
+                        ${isCollapsed && !isMobile ? 'pt-2' : ''}
+                    `}>
                         <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-xl shadow-lg">
                             🌿
                         </div>
-                        {/* Judul & Subjudul hanya terlihat saat tidak collapsed atau di mobile saat sidebar terbuka */}
-                        {(!isCollapsed || (isMobile && isSidebarOpen)) && ( /* Perbaikan di sini */
-                            <div>
-                                <h1 className="text-xl font-bold">Warehouse System</h1>
-                                <p className="text-green-300 text-sm">Jamu Tradisional</p>
-                            </div>
-                        )}
+                        <div className={`
+                            overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out text-center
+                            ${!isCollapsed || (isMobile && isSidebarOpen) ? 'max-w-xs opacity-100 mt-2' : 'max-w-0 opacity-0'}
+                        `}>
+                            <h1 className="text-xl font-bold">Warehouse System</h1>
+                            <p className="text-green-300 text-sm">Jamu Tradisional</p>
+                        </div>
                     </div>
-                    {/* Tombol Toggle Sidebar (untuk desktop atau menutup di mobile) */}
+                    
                     <button
                         onClick={isMobile ? toggleMobileSidebar : () => setIsCollapsed(!isCollapsed)}
-                        className="p-2 hover:bg-green-700 rounded-lg transition-colors hidden md:block" // Tombol ini hanya untuk desktop
+                        className={`
+                            p-2 hover:bg-green-700 rounded-lg transition-colors duration-200 absolute top-3 right-3
+                            ${isMobile ? 'block md:hidden' : 'hidden md:block'}
+                        `}
+                        aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                     >
-                        <svg className={`w-5 h-5 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                        </svg>
+                        {isMobile ? (
+                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"></path></svg>
+                        ) : (
+                            <svg className={`w-5 h-5 text-white transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                            </svg>
+                        )}
                     </button>
-                    {/* Tombol X untuk menutup di mobile (saat sidebar terbuka) */}
-                    {(isMobile && isSidebarOpen) && ( /* Perbaikan di sini */
-                        <button
-                            onClick={toggleMobileSidebar}
-                            className="p-2 hover:bg-green-700 rounded-lg transition-colors absolute top-4 right-4" // Posisi relatif terhadap sidebar
-                        >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </button>
-                    )}
                 </div>
-            </div>
 
-            {/* Navigation */}
-            <nav className="p-4 space-y-2 flex-1 overflow-y-auto">
-                {menuItems.map((item) => (
-                    <Link
-                        key={item.path}
-                        to={item.path}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 hover:bg-green-700 hover:shadow-lg group ${
-                            location.pathname.startsWith(item.path)
-                                ? 'bg-green-700 shadow-lg border-l-4 border-green-400'
-                                : ''
-                        }`}
-                        title={isCollapsed && (!isMobile) ? item.label : ''} // Tooltip hanya di desktop saat collapsed
-                    >
-                        <span className="text-lg">{item.icon}</span>
-                        {/* Label hanya terlihat saat tidak collapsed dan bukan mobile, atau saat mobile dan sidebar terbuka */}
-                        {(!isCollapsed || (isMobile && isSidebarOpen)) && <span className="font-medium">{item.label}</span>} {/* Perbaikan di sini */}
-                        {isCollapsed && (!isMobile) && ( /* Perbaikan di sini */
-                            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 whitespace-nowrap">
+                {/* Navigation */}
+                <nav className="p-4 space-y-2 flex-1 overflow-y-auto custom-scrollbar">
+                    {menuItems.map((item) => (
+                        <Link
+                            key={item.path}
+                            to={item.path}
+                            onClick={isMobile ? toggleMobileSidebar : undefined}
+                            className={`
+                                relative flex items-center gap-3 py-3 rounded-lg transition-all duration-200
+                                hover:bg-green-700 hover:shadow-lg group whitespace-nowrap overflow-hidden
+                                ${location.pathname.startsWith(item.path)
+                                    ? 'bg-green-700 shadow-lg border-l-4 border-green-400'
+                                    : ''
+                                }
+                                ${!isCollapsed || (isMobile && isSidebarOpen) ? 'px-6' : 'px-0 justify-center'}
+                            `}
+                        >
+                            <span className="text-lg flex-shrink-0">
+                                {item.icon}
+                            </span>
+                            <span className={`
+                                font-medium transition-opacity duration-300 ease-in-out
+                                ${!isCollapsed || (isMobile && isSidebarOpen) ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0'}
+                            `}>
                                 {item.label}
+                            </span>
+                            {isCollapsed && !isMobile && (
+                                <div className="absolute left-full ml-3 px-3 py-1 bg-gray-800 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                                    {item.label}
+                                </div>
+                            )}
+                        </Link>
+                    ))}
+                </nav>
+
+                {/* Logout Button */}
+                <div className="p-4 mt-auto">
+                    <button
+                        onClick={handleLogout}
+                        className={`
+                            w-full flex items-center gap-3 py-3 rounded-lg bg-red-600 hover:bg-red-700
+                            transition-colors duration-200 shadow-lg flex-shrink-0
+                            ${isCollapsed && (!isMobile) ? 'justify-center' : ''}
+                            ${!isCollapsed || (isMobile && isSidebarOpen) ? 'px-6' : 'px-0'}
+                        `}
+                    >
+                        <span className="text-lg flex-shrink-0">
+                            🚪
+                        </span>
+                        <span className={`
+                            font-medium transition-opacity duration-300 ease-in-out
+                            ${!isCollapsed || (isMobile && isSidebarOpen) ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0'}
+                        `}>
+                            Logout
+                        </span>
+                        {isCollapsed && !isMobile && (
+                            <div className="absolute left-full ml-3 px-3 py-1 bg-gray-800 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                                Logout
                             </div>
                         )}
-                    </Link>
-                ))}
-            </nav>
-
-            {/* Logout Button */}
-            <div className="p-4">
-                <button
-                    onClick={handleLogout}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-red-600 hover:bg-red-700 transition-colors duration-200 shadow-lg ${
-                        isCollapsed && (!isMobile) ? 'justify-center' : '' /* Perbaikan di sini */
-                    }`}
-                    title={isCollapsed && (!isMobile) ? 'Logout' : ''} // Tooltip hanya di desktop saat collapsed
-                >
-                    <span className="text-lg">🚪</span>
-                    {(!isCollapsed || (isMobile && isSidebarOpen)) && <span className="font-medium">Logout</span>} {/* Perbaikan di sini */}
-                </button>
+                    </button>
+                </div>
             </div>
-        </div>
+        </>
     );
 };
 

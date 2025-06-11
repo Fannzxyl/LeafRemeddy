@@ -40,3 +40,117 @@
 .custom-scrollbar::-webkit-scrollbar-thumb {
     background: #a0a0a0;
 }
+
+/* --- DEFINISI ANIMASI CUSTOM DARI DashboardStaz.jsx DI SINI --- */
+/* Pastikan ini ada di file CSS global Anda seperti index.css atau di tailwind.config.js */
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Kelas-kelas animasi ini akan digunakan di JSX */
+.animate-fadeIn {
+    animation: fadeIn 0.6s ease-out;
+}
+
+.animate-slideInUp {
+    animation: slideInUp 0.6s ease-out;
+}
+
+.animate-slideInLeft {
+    animation: slideInLeft 0.6s ease-out;
+}
+
+.animate-slideInRight {
+    animation: slideInRight 0.6s ease-out;
+}
+
+/* Smooth number transition (sudah ada di DashboardManager tapi baiknya ada di sini) */
+.tabular-nums {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Hover effects enhancement (sudah ada di DashboardManager tapi baiknya ada di sini) */
+.group:hover .group-hover\:scale-110 {
+    transform: scale(1.1);
+}
+
+/* Loading shimmer effect (sudah ada di DashboardManager tapi baiknya ada di sini) */
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: .5;
+    }
+}
+
+/* Better focus states (sudah ada di DashboardManager tapi baiknya ada di sini) */
+button:focus,
+select:focus,
+a:focus {
+    outline: 2px solid #10B981;
+    outline-offset: 2px;
+}
+
+/* Improved loading spinner (sudah ada di DashboardManager tapi baiknya ada di sini) */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Responsive improvements (sudah ada di DashboardManager tapi baiknya ada di sini) */
+@media (max-width: 768px) {
+    .animate-slideInUp,
+    .animate-slideInLeft,
+    .animate-slideInRight {
+        animation-delay: 0s !important;
+        animation-duration: 0.4s;
+    }
+}

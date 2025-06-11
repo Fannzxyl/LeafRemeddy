@@ -20,55 +20,30 @@ ChartJS.register(
 );
 
 const BarChart = ({ data, title }) => {
-  // DEBUG: Log data yang diterima
-  console.log('=== BarChart Debug ===');
-  console.log('BarChart received data:', data);
-  console.log('Data type:', typeof data);
-  console.log('Is Array:', Array.isArray(data));
-  
   const safeData = Array.isArray(data) ? data : [];
-  console.log('BarChart safeData:', safeData);
-  console.log('SafeData length:', safeData.length);
   
-  // DEBUG: Log setiap item data
-  safeData.forEach((item, index) => {
-    console.log(`--- Item ${index} ---`);
-    console.log('Full item:', item);
-    console.log('Item keys:', Object.keys(item));
-    console.log('Date:', item.date);
-    console.log('Total Masuk:', item['Total Masuk']);
-    console.log('Total Keluar:', item['Total Keluar']);
-    console.log('Total Masuk type:', typeof item['Total Masuk']);
-    console.log('Total Keluar type:', typeof item['Total Keluar']);
-  });
-
   const labels = safeData.map(item => {
     const date = new Date(item.date);
     if (isNaN(date.getTime())) {
-      console.log('Invalid date:', item.date);
+      // console.log('Invalid date:', item.date); // Biarkan log ini jika Anda ingin melihat tanggal tidak valid
       return item.date; // Fallback jika tanggal tidak valid
     }
     const formatted = date.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
-    console.log(`Date formatted: ${item.date} -> ${formatted}`);
+    // console.log(`Date formatted: ${item.date} -> ${formatted}`); // Hapus log ini
     return formatted;
   });
 
-  // DEBUG: Log processed data
   const masukData = safeData.map(item => {
     const value = parseInt(item['Total Masuk'], 10) || 0;
-    console.log(`Processing Total Masuk: ${item['Total Masuk']} -> ${value}`);
+    // console.log(`Processing Total Masuk: ${item['Total Masuk']} -> ${value}`); // Hapus log ini
     return value;
   });
 
   const keluarData = safeData.map(item => {
     const value = parseInt(item['Total Keluar'], 10) || 0;
-    console.log(`Processing Total Keluar: ${item['Total Keluar']} -> ${value}`);
+    // console.log(`Processing Total Keluar: ${item['Total Keluar']} -> ${value}`); // Hapus log ini
     return value;
   });
-
-  console.log('Final labels:', labels);
-  console.log('Final masukData:', masukData);
-  console.log('Final keluarData:', keluarData);
 
   const chartData = {
     labels,
@@ -90,8 +65,8 @@ const BarChart = ({ data, title }) => {
     ],
   };
 
-  console.log('Final chartData:', chartData);
-  console.log('=== End BarChart Debug ===');
+  // console.log('Final chartData:', chartData); // Hapus log ini
+  // console.log('=== End BarChart Debug ==='); // Hapus log ini
 
   const options = {
     responsive: true,
@@ -148,7 +123,7 @@ const BarChart = ({ data, title }) => {
   };
 
   if (safeData.length === 0) {
-    console.log('No data available, showing fallback message');
+    // console.log('No data available, showing fallback message'); // Hapus log ini
     return <p>Data transaksi belum tersedia.</p>; 
   }
 
