@@ -1,3 +1,42 @@
+/* src/index.css */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom CSS untuk responsivitas sidebar mobile (opsional, tapi memperhalus transisi) */
+
+/* Aturan untuk body agar overflow-hidden saat sidebar mobile terbuka */
+/* Ini bisa ditambahkan via JS atau di sini. Untuk JS, tambahkan class 'overflow-hidden' ke body */
+/* Contoh di JS: document.body.classList.toggle('overflow-hidden', isMobile && isSidebarOpen); */
+
+/* Menyesuaikan scrollbar untuk tampilan yang lebih bersih */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Jika Anda ingin scrollbar khusus untuk elemen tertentu, definisikan kelasnya */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #e0e0e0;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #a0a0a0;
+}

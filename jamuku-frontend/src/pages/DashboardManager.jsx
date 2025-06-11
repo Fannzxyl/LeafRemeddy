@@ -90,7 +90,6 @@ export default function DashboardManager() {
             if (errorMessage.includes("Table") && errorMessage.includes("doesn't exist")) {
                 setErrorCharts("Error Database: Pastikan semua tabel (inventories, transactions, users) sudah ada di database Anda.");
             } else {
-                // Log error status untuk debugging lebih lanjut
                 console.error("Full AxiosError Response:", err.response);
                 setErrorCharts(errorMessage || "Gagal memuat data dashboard. Pastikan server backend berjalan.");
             }
@@ -126,10 +125,9 @@ export default function DashboardManager() {
 
     return (
         <DashboardLayout>
-            {/* ... (Konten HTML/JSX lainnya tetap sama) ... */}
             <div className="p-6">
                 {/* Header Dashboard */}
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
                     <div>
                         <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
                             Dashboard <span className="text-green-600">{managerUsername}</span>
@@ -138,14 +136,15 @@ export default function DashboardManager() {
                             Selamat datang! Anda memiliki akses penuh terhadap manajemen produk, transaksi, dan pengguna.
                         </p>
                     </div>
-                    <div className="flex items-center space-x-4">
+                    {/* Menggunakan order-first untuk mobile agar selector/refresh di atas header */}
+                    <div className="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-4 mt-4 md:mt-0 w-full md:w-auto order-first md:order-last">
                         {/* Date Range Selector */}
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 w-full md:w-auto">
                             <label className="text-sm font-medium text-gray-700">Periode:</label>
                             <select
                                 value={dateRange}
                                 onChange={(e) => setDateRange(e.target.value)}
-                                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 w-full md:w-auto"
                             >
                                 <option value="7">7 Hari Terakhir</option>
                                 <option value="30">30 Hari Terakhir</option>
@@ -155,7 +154,7 @@ export default function DashboardManager() {
                         {/* Refresh Button */}
                         <button
                             onClick={handleRefresh}
-                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2"
+                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 flex items-center justify-center space-x-2 w-full md:w-auto"
                             disabled={loadingCharts}
                         >
                             <svg className={`w-4 h-4 ${loadingCharts ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
