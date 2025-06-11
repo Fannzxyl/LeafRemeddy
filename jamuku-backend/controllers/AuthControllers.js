@@ -107,3 +107,31 @@ export const Login = async (req, res) => { // Mengubah ke async
         res.status(500).json({ message: "Terjadi kesalahan server saat login", error: error.message }); // Tambahkan error.message untuk debug
     }
 };
+
+// TAMBAHAN: Endpoint untuk verify token
+export const verifyTokenEndpoint = (req, res) => {
+    console.log("VerifyTokenEndpoint: Function called.");
+    console.log("VerifyTokenEndpoint: req.user:", req.user);
+    
+    // Jika sampai di sini, artinya token sudah valid (karena sudah melewati middleware verifyToken)
+    // req.user sudah berisi data user dari token
+    
+    try {
+        res.json({
+            success: true,
+            message: "Token valid",
+            user: {
+                id: req.user.userId,
+                username: req.user.userName,
+                role: req.user.userRole
+            },
+            role: req.user.userRole // Frontend mengharapkan field 'role'
+        });
+    } catch (error) {
+        console.error("VerifyTokenEndpoint: Error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Terjadi kesalahan saat verifikasi token"
+        });
+    }
+};

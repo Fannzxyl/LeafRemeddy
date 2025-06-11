@@ -32,7 +32,6 @@ app.use(cookieParser());
     }
 })();
 
-
 // Import routes (pastikan rute TransactionRoute tetap ada jika Anda punya API transaksi terpisah)
 import AuthRoute from "./routes/AuthRoute.js";
 import TransactionRoute from "./routes/TransactionRoute.js"; // JIKA ANDA MEMILIKI API TRANSAKSI
@@ -54,7 +53,6 @@ app.use("/api", LokasiGudangRoute);
 app.use("/api", InventoryRoute);
 app.use("/api", UserRoute);
 app.use("/api/dashboard", DashboardRoute);
-
 
 // Test endpoint
 app.get("/", (req, res) => {
