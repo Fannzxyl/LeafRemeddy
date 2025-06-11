@@ -19,15 +19,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Test database connection (tetap sama)
-db.getConnection((err, connection) => {
-    if (err) {
+// Test database connection - DIUBAH KE ASYNC/AWAIT
+(async () => { // Gunakan Immediately Invoked Async Function Expression (IIAFE)
+    let connection; // Deklarasikan di luar try
+    try {
+        connection = await db.getConnection(); // Dapatkan koneksi secara async
+        console.log("✅ Terkoneksi ke database MySQL (leaff-remeddy) melalui Connection Pool");
+    } catch (err) {
         console.error("❌ Gagal terhubung ke database MySQL:", err.message);
-        return;
+    } finally {
+        if (connection) connection.release(); // Pastikan koneksi dilepaskan
     }
-    console.log("✅ Terkoneksi ke database MySQL (leaff-remeddy) melalui Connection Pool");
-    if (connection) connection.release();
-});
+})();
+
 
 // Import routes (pastikan rute TransactionRoute tetap ada jika Anda punya API transaksi terpisah)
 import AuthRoute from "./routes/AuthRoute.js";

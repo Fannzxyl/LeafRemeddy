@@ -1,4 +1,5 @@
-// middleware/authMiddleware.js
+// jamuku-backend/middleware/authMiddleware.js
+
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
@@ -15,7 +16,7 @@ export const verifyToken = (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-    console.log("VerifyToken: Token received:", token.substring(0, 30) + "...");
+    console.log("VerifyToken: Token received:", token.substring(0, 30) + "..."); // Log sebagian token
 
     jwt.verify(token, ACCESS_TOKEN_SECRET, (err, decoded) => {
         if (err) {
@@ -23,32 +24,47 @@ export const verifyToken = (req, res, next) => {
             return res.status(401).json({ message: 'Token tidak valid atau sudah kadaluarsa.' });
         }
 
-        req.user = decoded;
-        req.userIdFromToken = decoded.userId;
-        req.userRoleFromToken = decoded.userRole; // Pastikan ini 'MANAGER' atau 'STAZ'
+        // --- Ini adalah bagian penting yang perlu Anda perhatikan ---
+        // Pastikan req.user mendapatkan payload yang benar.
+        // Jika payload token Anda memiliki 'userRole', pastikan itu yang digunakan.
+        req.user = decoded; // Ini akan mengisi req.user dengan seluruh payload token
+        // Contoh payload: { userId: 25, userName: 'manager', userRole: 'MANAGER', ... }
+        // Maka: req.user.userId, req.user.userName, req.user.userRole akan tersedia.
 
-        console.log("VerifyToken: Token decoded successfully. Payload:", req.user);
+        // Anda sudah memiliki ini dan itu membantu debugging, tapi pastikan konsisten
+        // dengan apa yang digunakan oleh middleware lain.
+        // Jika middleware lain menggunakan req.user.role, maka pastikan decoded.role ada
+        // atau kita mapping decoded.userRole ke req.user.role
+        // Untuk konsistensi dengan roleMiddleware.js (yang mungkin mencari req.user.role):
+        req.user.role = decoded.userRole; // Pastikan req.user.role juga terisi
+        req.userIdFromToken = decoded.userId; // Tetap pertahankan untuk debugging Anda
+        req.userRoleFromToken = decoded.userRole; // Tetap pertahankan untuk debugging Anda
+
+        console.log("VerifyToken: Token decoded successfully. Full req.user:", req.user);
         console.log("VerifyToken: Decoded userRole (from payload):", req.user.userRole);
         console.log("VerifyToken: req.userIdFromToken set to:", req.userIdFromToken);
         console.log("VerifyToken: req.userRoleFromToken set to:", req.userRoleFromToken);
+        console.log("VerifyToken: req.user.role set to:", req.user.role); // Log tambahan untuk req.user.role
+
         next();
     });
 };
 
 export const verifyUser = (req, res, next) => {
     console.log("VerifyUser: Function called. req.user:", req.user);
-    console.log("VerifyUser: Role from req.user:", req.user?.userRole);
+    // Sekarang req.user.role seharusnya sudah terisi
+    console.log("VerifyUser: Role from req.user:", req.user?.role);
     console.log("VerifyUser: req.userIdFromToken:", req.userIdFromToken);
 
-    if (!req.user || !req.userIdFromToken || !req.userRoleFromToken) {
+    if (!req.user || !req.userIdFromToken || !req.userRoleFromToken || !req.user?.role) {
         return res.status(401).json({ message: "Tidak diizinkan: Data pengguna tidak ditemukan setelah verifikasi token." });
     }
     next();
 };
 
 export const verifyManager = (req, res, next) => {
-    // MENULIS ULANG STRING 'MANAGER' SECARA MANUAL
-    const userRoleFromToken = String(req.userRoleFromToken || '').trim();
+    // Gunakan req.user.role untuk konsistensi dengan roleMiddleware jika ada
+    const userRoleFromToken = String(req.user?.role || '').trim(); // Menggunakan req.user.role
     const expectedRole = 'MANAGER'; // <--- TULIS ULANG INI SECARA MANUAL (jangan copy-paste)
 
     console.log("VerifyManager: Function called.");

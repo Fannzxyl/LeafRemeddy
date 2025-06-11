@@ -36,7 +36,8 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
+    // PERBAIKAN: Menambahkan `future` prop untuk menghilangkan React Router Future Flag Warnings
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         {/* Rute awal akan dialihkan ke /login */}
         <Route path="/" element={<Navigate to="/login" />} />
